@@ -1,4 +1,4 @@
-package com.hypermurea.hslpushdroid;
+package com.hypermurea.hslpushdroid.gcm;
 
 import android.app.Notification;
 import android.app.NotificationManager;
@@ -9,12 +9,10 @@ import android.os.PowerManager;
 import android.util.Log;
 
 import com.google.android.gcm.GCMBaseIntentService;
+import com.hypermurea.hslpushdroid.R;
+import com.hypermurea.hslpushdroid.R.drawable;
 
 public class GCMIntentService extends GCMBaseIntentService {
-	
-	public static final String REGISTERED_ACTION = "com.hypermurea.hslpushdroid.registered";
-	public static final String REGISTRATION_ID = "registrationId";
-
 	
 	private static final String TAG ="hslpushdroid.GCMBaseIntentService";
 	
@@ -63,8 +61,8 @@ public class GCMIntentService extends GCMBaseIntentService {
 		// TODO Auto-generated method stub
 		Log.e(TAG, "onRegistered invoked");
 		Intent intent = new Intent();
-		intent.setAction(REGISTERED_ACTION);
-		intent.putExtra(REGISTRATION_ID, registrationId);
+		intent.setAction(GCMRegistrationService.REGISTERED_ACTION);
+		intent.putExtra(GCMRegistrationService.REGISTRATION_ID, registrationId);
 		Log.e(TAG, "registrationId acquired: " + registrationId);
 		context.sendBroadcast(intent);
 	}

@@ -4,16 +4,12 @@
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
     >
-<TextView  
-    android:layout_width="fill_parent" 
-    android:layout_height="wrap_content" 
-    android:text="@string/hello"
-    />
 
-<ListView
-    android:id="@+id/linesOfInterestListView"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content" >
-</ListView>
+    <TextView
+        android:id="@+id/textView1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Hello world!"
+        android:textAppearance="?android:attr/textAppearanceLarge" />
 
 </LinearLayout>

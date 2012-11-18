@@ -26,3 +26,7 @@ local.properties
 
 # PDT-specific
 .buildpath
+
+# HSLPushdroid non-public configuration files
+res/raw/development.properties
+res/raw/live.properties

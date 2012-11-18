@@ -1,6 +1,7 @@
 package com.hypermurea.hslpushdroid;
 
 import java.io.IOException;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -16,39 +17,46 @@ import org.json.JSONException;
 import android.os.AsyncTask;
 import android.util.Log;
 
-public class UserLoginAsyncTask extends AsyncTask<String,Void,List<String>> {
+public class FindLinesByNameAsyncTask extends AsyncTask<String,Void,List<String>>{
 
-	public static final int UUID = 0;
-	public static final int REGISTRATION_ID = 1;
-	
-	private final String TAG = "UserLoginAsyncTask";
-	
-	private UserSignalListener listener;
+	private static final String TAG = "FindLinesByNameAsyncTask";
+
 	private String serviceUrl;
+	private String user;
+	private String password;
 	
-	public UserLoginAsyncTask(String serviceUrl) {
+	private FindLinesResultListener listener;
+	
+	public FindLinesByNameAsyncTask(String serviceUrl, String user, String password) {
+		super();
 		this.serviceUrl = serviceUrl;
+		this.user = user;
+		this.password = password;
 	}
 	
+	
 	@Override
-	protected List<String> doInBackground(String... params) {
-		String queryString = "/gcm?uuid=" + params[UUID] + "&regId=" + params[REGISTRATION_ID]; 
-
-		HttpClient httpClient = new DefaultHttpClient();
-		HttpGet request = new HttpGet(serviceUrl + queryString);
+	protected List<String> doInBackground(String... searchTerms) {
+		MessageFormat baseUrl = 
+				new MessageFormat(serviceUrl + "?request=lines&format=json&user={0}&pass={1}&query={2}");
 		
-		Log.d(TAG, serviceUrl+queryString);
+		String[] args = {user, password, searchTerms[0]};		
+		
+		HttpClient httpClient = new DefaultHttpClient();
+		HttpGet request = new HttpGet(baseUrl.format(args));
+		
+		Log.d(TAG, baseUrl.format(args));
 		ResponseHandler<String> responseHandler = new BasicResponseHandler();
 
-		List<String> linesOfInterest = null;
+		List<String> searchResult = null;
 		
 		try {
 			String responseString = httpClient.execute(request, responseHandler);
 			JSONArray response = new JSONArray(responseString);
 			
-			linesOfInterest = new ArrayList<String>();
+			searchResult = new ArrayList<String>();
 			for( int i = 0; i < response.length(); i ++) {
-				linesOfInterest.add(response.getString(i));
+				searchResult.add(response.getJSONObject(i).get("code_short").toString());
 			}	
 			
 		} catch (ClientProtocolException e) {
@@ -59,20 +67,17 @@ public class UserLoginAsyncTask extends AsyncTask<String,Void,List<String>> {
 			e.printStackTrace();
 		}
 		
-		return linesOfInterest;
-	}
-	
-	@Override
-	public void onPostExecute(List<String> result) {
-		if(result != null) {
-			listener.signalUserLoggedIn(result);
-		} else {
-			listener.signalLoginFailed();
-		}
-	}
-	
-	public void setUserSignalListener(UserSignalListener listener) {
-		this.listener = listener;
+		return searchResult;
+		
 	}
 
+	@Override
+	public void onPostExecute(List<String> result) {
+		listener.receiveFindLinesResult(result);
+	}
+	
+	public void setFindLinesResultListener(FindLinesResultListener listener) {
+		this.listener = listener;
+	}
+	
 }

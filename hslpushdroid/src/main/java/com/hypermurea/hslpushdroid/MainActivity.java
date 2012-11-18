@@ -42,14 +42,12 @@ public class MainActivity extends RoboActivity implements UserSignalListener, Fi
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		
-		Log.e(TAG, "onCreate invoked");
 		super.onCreate(savedInstanceState);
 		
 		setContentView(R.layout.main);
 
 		Intent intent = getIntent();
 		if (Intent.ACTION_SEARCH.equals(intent.getAction())) {
-			Log.e(TAG, "ACTION SEARCH INVOKED");
 			String query = intent.getStringExtra(SearchManager.QUERY);
 
 			findLinesTask.setFindLinesResultListener(this);
@@ -106,18 +104,14 @@ public class MainActivity extends RoboActivity implements UserSignalListener, Fi
 
 	@Override
 	public void signalLoginFailed() {
-		Log.d(TAG, "signalLoginFailed");
-
 		Toast.makeText(this, "Login failed", Toast.LENGTH_LONG).show();
 	}
 
 	@Override
 	public void receiveFindLinesResult(List<TransportLine> lines) {
-		//Toast.makeText(this, "search finished", Toast.LENGTH_LONG).show();
-		Log.d(TAG, "receiveFindLinesResult");
 		
-		if(lines!=null) {
-			ArrayAdapter<TransportLine> adapter = new ArrayAdapter<TransportLine>(this, android.R.layout.simple_list_item_1, lines);
+		if(lines != null) {
+			TransportLineAdapter adapter = new TransportLineAdapter(this, R.layout.line_list_row, lines);
 			linesListView.setAdapter(adapter);
 			adapter.notifyDataSetChanged();			
 		} else {

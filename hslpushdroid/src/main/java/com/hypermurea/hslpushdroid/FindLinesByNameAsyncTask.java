@@ -3,6 +3,8 @@ package com.hypermurea.hslpushdroid;
 import java.io.IOException;
 import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 
 import org.apache.http.client.ClientProtocolException;
@@ -13,52 +15,61 @@ import org.apache.http.impl.client.BasicResponseHandler;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.json.JSONArray;
 import org.json.JSONException;
+import org.json.JSONObject;
 
 import android.os.AsyncTask;
 import android.util.Log;
 
-public class FindLinesByNameAsyncTask extends AsyncTask<String,Void,List<String>>{
+public class FindLinesByNameAsyncTask extends AsyncTask<String,Void,List<TransportLine>>{
 
 	private static final String TAG = "FindLinesByNameAsyncTask";
 
 	private String serviceUrl;
 	private String user;
 	private String password;
-	
+
 	private FindLinesResultListener listener;
-	
+
 	public FindLinesByNameAsyncTask(String serviceUrl, String user, String password) {
 		super();
 		this.serviceUrl = serviceUrl;
 		this.user = user;
 		this.password = password;
 	}
-	
-	
+
+
 	@Override
-	protected List<String> doInBackground(String... searchTerms) {
+	protected List<TransportLine> doInBackground(String... searchTerms) {
 		MessageFormat baseUrl = 
 				new MessageFormat(serviceUrl + "?request=lines&format=json&user={0}&pass={1}&query={2}");
-		
+
 		String[] args = {user, password, searchTerms[0]};		
-		
+
 		HttpClient httpClient = new DefaultHttpClient();
 		HttpGet request = new HttpGet(baseUrl.format(args));
-		
+
 		Log.d(TAG, baseUrl.format(args));
 		ResponseHandler<String> responseHandler = new BasicResponseHandler();
 
-		List<String> searchResult = null;
-		
+		List<TransportLine> searchResult = null;
+
 		try {
 			String responseString = httpClient.execute(request, responseHandler);
 			JSONArray response = new JSONArray(responseString);
-			
-			searchResult = new ArrayList<String>();
+
+			searchResult = new ArrayList<TransportLine>();
+			HashSet<String> resultHash = new HashSet<String>();
 			for( int i = 0; i < response.length(); i ++) {
-				searchResult.add(response.getJSONObject(i).get("code_short").toString());
+				JSONObject lineJson = response.getJSONObject(i);
+				TransportLine line = new TransportLine(lineJson.getString("code_short"), lineJson.getInt("transport_type_id"), lineJson.getString("name"));
+				String key = line.shortCode + " " + line.transportType;
+				if(!resultHash.contains(key)) {
+					resultHash.add(key);
+					searchResult.add(line);
+				}
 			}	
 			
+
 		} catch (ClientProtocolException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
@@ -66,18 +77,18 @@ public class FindLinesByNameAsyncTask extends AsyncTask<String,Void,List<String>
 		} catch(JSONException e) {
 			e.printStackTrace();
 		}
-		
+
 		return searchResult;
-		
+
 	}
 
 	@Override
-	public void onPostExecute(List<String> result) {
+	public void onPostExecute(List<TransportLine> result) {
 		listener.receiveFindLinesResult(result);
 	}
-	
+
 	public void setFindLinesResultListener(FindLinesResultListener listener) {
 		this.listener = listener;
 	}
-	
+
 }

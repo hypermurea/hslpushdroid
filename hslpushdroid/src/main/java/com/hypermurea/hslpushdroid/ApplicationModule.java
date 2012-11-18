@@ -48,8 +48,6 @@ public class ApplicationModule extends AbstractModule {
 
 	@Provides @Singleton
 	public Properties getEnvironmentConfig(Resources resources) {
-		//Provider<Resources> resourcesProvider = this.getProvider(Resources.class);
-		System.err.println("resources reference: " + resources);
 		Properties properties = new Properties();
 		try {
 		if(isRunningOnSimulator()) {

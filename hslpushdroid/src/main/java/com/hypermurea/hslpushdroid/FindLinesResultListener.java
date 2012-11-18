@@ -4,6 +4,6 @@ import java.util.List;
 
 public interface FindLinesResultListener {
 
-	public void receiveFindLinesResult(List<String> lines);
+	public void receiveFindLinesResult(List<TransportLine> lines);
 	
 }

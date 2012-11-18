@@ -8,7 +8,6 @@ import javax.inject.Inject;
 import com.hypermurea.hslpushdroid.gcm.GCMRegistrationService;
 
 import android.annotation.SuppressLint;
-import android.annotation.TargetApi;
 import android.app.SearchManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -21,28 +20,32 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
+import android.view.MenuItem;
+import android.widget.ArrayAdapter;
+import android.widget.ListView;
 import android.widget.SearchView;
 import android.widget.Toast;
 import roboguice.activity.RoboActivity;
+import roboguice.inject.InjectView;
 
 @SuppressLint("NewApi")
 public class MainActivity extends RoboActivity implements UserSignalListener, FindLinesResultListener {
 
 	private static String TAG = "hslpushdroid";
 
-	@Inject
-	private GCMRegistrationService gcmRegistrationService;
-
-	@Inject
-	private UserLoginAsyncTask loginTask;
-	@Inject
-	private FindLinesByNameAsyncTask findLinesTask;
+	@InjectView(R.id.linesListView) ListView linesListView;
+	
+	@Inject private GCMRegistrationService gcmRegistrationService;
+	@Inject private UserLoginAsyncTask loginTask;
+	@Inject private FindLinesByNameAsyncTask findLinesTask;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		
 		Log.e(TAG, "onCreate invoked");
 		super.onCreate(savedInstanceState);
+		
+		setContentView(R.layout.main);
 
 		Intent intent = getIntent();
 		if (Intent.ACTION_SEARCH.equals(intent.getAction())) {
@@ -56,8 +59,6 @@ public class MainActivity extends RoboActivity implements UserSignalListener, Fi
 
 			registerGcmRegistrationBroadcastReceiver();
 			gcmRegistrationService.registerForGcmMessaging(this);
-
-			setContentView(R.layout.main);
 
 		}
 	}
@@ -111,14 +112,17 @@ public class MainActivity extends RoboActivity implements UserSignalListener, Fi
 	}
 
 	@Override
-	public void receiveFindLinesResult(List<String> lines) {
+	public void receiveFindLinesResult(List<TransportLine> lines) {
+		//Toast.makeText(this, "search finished", Toast.LENGTH_LONG).show();
+		Log.d(TAG, "receiveFindLinesResult");
 		
-		for(String s : lines) {
-			Log.e(TAG, "Found line: " + s);
+		if(lines!=null) {
+			ArrayAdapter<TransportLine> adapter = new ArrayAdapter<TransportLine>(this, android.R.layout.simple_list_item_1, lines);
+			linesListView.setAdapter(adapter);
+			adapter.notifyDataSetChanged();			
+		} else {
+			Toast.makeText(this, "search failed", Toast.LENGTH_LONG).show();
 		}
-		//ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, lines);
-		//pickLinesListView.setAdapter(adapter);
-		//adapter.notifyDataSetChanged();		
 	}
 
 	public boolean onCreateOptionsMenu(Menu menu) {
@@ -137,6 +141,18 @@ public class MainActivity extends RoboActivity implements UserSignalListener, Fi
 		}
 		return true;
 	}
+	
+	@Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.search:
+                onSearchRequested();
+                return true;
+            default:
+                return false;
+        }
+    }
+	
 
 	public void setGCMRegistrationService(GCMRegistrationService service) {
 		this.gcmRegistrationService = service;

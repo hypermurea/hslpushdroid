@@ -68,13 +68,14 @@ public class ApplicationModule extends AbstractModule {
 	}
 	
 	@Provides
-	public UserLoginAsyncTask getUserLoginAsyncTask(Properties environmentConfig) {
-		return new UserLoginAsyncTask(environmentConfig.getProperty(HSLPUSH_BASE_URL));	
-	}
-	
-	@Provides
 	public FindLinesByNameAsyncTask getFindLinesByNameAsyncTask(Properties environmentConfig) {
 		return new FindLinesByNameAsyncTask(environmentConfig.getProperty(REITTIOPAS_BASE_URL), environmentConfig.getProperty(REITTIOPAS_USER_ID), environmentConfig.getProperty(REITTIOPAS_PASSWORD));
+	}
+		
+	@Provides
+	@Singleton
+	public UserProfileFactory getUserProfileFactory(GCMRegistrationService gcmRegistrationService, Properties environmentConfig) {
+		return new UserProfileFactory(gcmRegistrationService, environmentConfig.getProperty(HSLPUSH_BASE_URL));
 	}
 	
 	private boolean isRunningOnSimulator() {

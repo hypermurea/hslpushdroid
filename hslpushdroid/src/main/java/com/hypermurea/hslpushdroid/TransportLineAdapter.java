@@ -1,20 +1,22 @@
 package com.hypermurea.hslpushdroid;
 
-import java.util.HashMap;
 import java.util.List;
 
 import android.content.Context;
 import android.util.SparseIntArray;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 
 public class TransportLineAdapter extends ArrayAdapter<TransportLine> {
 
 	private LayoutInflater inflater;
+	private TransportLineClickListener clickListener;
 
 	private static SparseIntArray transportImageMap; 
 	private static int[][] transportToImage = {
@@ -65,9 +67,10 @@ public class TransportLineAdapter extends ArrayAdapter<TransportLine> {
 
 
 	public TransportLineAdapter(Context context, int textViewResourceId,
-			List<TransportLine> objects) {
+			List<TransportLine> objects, TransportLineClickListener listener) {
 		super(context, textViewResourceId, objects);
 		inflater = LayoutInflater.from(context);
+		this.clickListener = listener;
 	}
 
 	@Override
@@ -77,18 +80,39 @@ public class TransportLineAdapter extends ArrayAdapter<TransportLine> {
 		if(view == null) {
 			view = inflater.inflate(R.layout.line_list_row, null);
 		}
-
+		view.setClickable(false);
+		
 		TransportLine line = this.getItem(position);
 
 		TextView lineCodeTextView = (TextView) view.findViewById(R.id.lineCode);
 		TextView lineNameTextView = (TextView) view.findViewById(R.id.lineName);
 		ImageView transportImageView = (ImageView) view.findViewById(R.id.transportImage);
+		ImageButton trackLineButton = (ImageButton) view.findViewById(R.id.trackLineImageButton);
 
 		lineCodeTextView.setText(line.shortCode);
 		lineNameTextView.setText(line.name);
-		transportImageView.setImageResource(TransportLineAdapter.transportImageMap.get(line.transportType));
+		transportImageView.setImageResource(getDrawableId(line));
+		trackLineButton.setOnClickListener(new TransportLineClickProxy(line));
 
 		return view;
+	}
+
+	class TransportLineClickProxy implements OnClickListener {
+
+		private TransportLine line;
+		public TransportLineClickProxy(TransportLine line) {
+			this.line = line;
+		}
+		
+		@Override
+		public void onClick(View v) {
+			TransportLineAdapter.this.clickListener.transportLineClicked(line);
+		}
+		
+	}
+	
+	public static int getDrawableId(TransportLine line) {
+		return TransportLineAdapter.transportImageMap.get(line.transportType);
 	}
 
 

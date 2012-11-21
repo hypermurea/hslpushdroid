@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <item
+        name="bussesOfInterest"
+        type="id"/>
+
+    <item
+        name="metrosOfInterest"
+        type="id"/>
+
+    <item
+        name="tramsOfInterest"
+        type="id"/>
+
+    <item
+        name="ferriesOfInterest"
+        type="id"/>
+
+</resources>

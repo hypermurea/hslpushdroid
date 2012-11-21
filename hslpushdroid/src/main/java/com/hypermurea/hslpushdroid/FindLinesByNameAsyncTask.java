@@ -58,15 +58,16 @@ public class FindLinesByNameAsyncTask extends AsyncTask<String,Void,List<Transpo
 			JSONArray response = new JSONArray(responseString);
 
 			searchResult = new ArrayList<TransportLine>();
-			HashSet<String> resultHash = new HashSet<String>();
+			HashMap<String, TransportLine> resultHash = new HashMap<String, TransportLine>();
 			for( int i = 0; i < response.length(); i ++) {
 				JSONObject lineJson = response.getJSONObject(i);
 				TransportLine line = new TransportLine(lineJson.getString("code_short"), lineJson.getInt("transport_type_id"), lineJson.getString("name"));
 				String key = line.shortCode + " " + line.transportType;
-				if(!resultHash.contains(key)) {
-					resultHash.add(key);
+				if(!resultHash.containsKey(key)) {
+					resultHash.put(key, line);
 					searchResult.add(line);
-				}
+				} 
+				resultHash.get(key).codes.add(lineJson.getString("code"));
 			}	
 			
 

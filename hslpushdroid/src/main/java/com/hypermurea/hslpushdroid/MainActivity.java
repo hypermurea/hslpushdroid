@@ -1,51 +1,59 @@
 package com.hypermurea.hslpushdroid;
 
+import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
+import java.util.Map;
 
-import javax.inject.Inject;
-
-import com.hypermurea.hslpushdroid.gcm.GCMRegistrationService;
+import com.google.inject.Inject;
 
 import android.annotation.SuppressLint;
 import android.app.SearchManager;
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
-import android.content.SharedPreferences;
-import android.content.SharedPreferences.Editor;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
-import android.widget.ArrayAdapter;
+import android.view.View;
+import android.widget.ExpandableListView;
+import android.widget.FrameLayout;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.SearchView;
+import android.widget.SimpleExpandableListAdapter;
+import android.widget.TextView;
 import android.widget.Toast;
 import roboguice.activity.RoboActivity;
 import roboguice.inject.InjectView;
 
 @SuppressLint("NewApi")
-public class MainActivity extends RoboActivity implements UserSignalListener, FindLinesResultListener {
+public class MainActivity extends RoboActivity implements FindLinesResultListener, TransportLineClickListener {
 
 	private static String TAG = "hslpushdroid";
 
-	@InjectView(R.id.linesListView) ListView linesListView;
+	@InjectView(R.id.mainLinearLayout)
+	private LinearLayout mainLayout;
 	
-	@Inject private GCMRegistrationService gcmRegistrationService;
-	@Inject private UserLoginAsyncTask loginTask;
+	@InjectView(R.id.linesListView) 
+	private ListView linesListView;
+	
 	@Inject private FindLinesByNameAsyncTask findLinesTask;
-
+	@Inject private UserProfileFactory userProfileFactory;
+	
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		
 		super.onCreate(savedInstanceState);
 		
 		setContentView(R.layout.main);
-
+		
+		injectDynamicLinesOfInterestViewsToLayout();
+		updateDynamicLinesOfInterestViews(userProfileFactory.getUserProfile(this));
+		
 		Intent intent = getIntent();
 		if (Intent.ACTION_SEARCH.equals(intent.getAction())) {
 			String query = intent.getStringExtra(SearchManager.QUERY);
@@ -53,72 +61,57 @@ public class MainActivity extends RoboActivity implements UserSignalListener, Fi
 			findLinesTask.setFindLinesResultListener(this);
 			findLinesTask.execute(query);
 
-		} else { // TODO Probably would be better to check for LAUNCH 
-
-			registerGcmRegistrationBroadcastReceiver();
-			gcmRegistrationService.registerForGcmMessaging(this);
-
 		}
-	}
-
-	private void registerGcmRegistrationBroadcastReceiver() {
-		this.registerReceiver(
-				new BroadcastReceiver() {
-					@Override
-					public void onReceive(Context ctx, Intent intent) {
-						loginTask.setUserSignalListener(MainActivity.this);
-						loginTask.execute(new String[] {getUniqueUserIdentifier(), intent.getStringExtra(GCMRegistrationService.REGISTRATION_ID)});	 
-					}
-				}, new IntentFilter(GCMRegistrationService.REGISTERED_ACTION));	
-	}
-
-	private String getUniqueUserIdentifier() {
-		SharedPreferences preferences = this.getPreferences(MODE_PRIVATE);
-		final String UUID_KEY = "uuid_key";
-
-		String uuid = preferences.getString(UUID_KEY, null);
-
-		if(uuid == null) {
-			uuid = UUID.randomUUID().toString();
-			Editor editor = preferences.edit();
-			editor.putString(UUID_KEY, uuid);
-			editor.commit();
-			Log.d(TAG, "generated new uuid: " + uuid);
-		}
-
-		Log.d(TAG, "uuid request response: " + uuid);
-		return uuid;
-	}
-
-
-	@Override
-	public void signalUserLoggedIn(List<String> linesOfInterest) {
-		Log.d(TAG, "signalUserLoggedIn");
-
-		//ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, linesOfInterest);
-		//linesOfInterestListView.setAdapter(adapter);
-		//adapter.notifyDataSetChanged();
-
-		Toast.makeText(this, "User logged in", Toast.LENGTH_LONG).show();
-	}
-
-	@Override
-	public void signalLoginFailed() {
-		Toast.makeText(this, "Login failed", Toast.LENGTH_LONG).show();
-	}
-
-	@Override
-	public void receiveFindLinesResult(List<TransportLine> lines) {
 		
-		if(lines != null) {
-			TransportLineAdapter adapter = new TransportLineAdapter(this, R.layout.line_list_row, lines);
-			linesListView.setAdapter(adapter);
-			adapter.notifyDataSetChanged();			
-		} else {
-			Toast.makeText(this, "search failed", Toast.LENGTH_LONG).show();
+	}
+	
+	private void injectDynamicLinesOfInterestViewsToLayout() {
+		if(mainLayout.findViewById(R.id.bussesOfInterest) == null) {
+			addLineOfInterestRowToLayout(R.id.bussesOfInterest, R.drawable.bussi);
+			addLineOfInterestRowToLayout(R.id.metrosOfInterest, R.drawable.metro);
+			addLineOfInterestRowToLayout(R.id.tramsOfInterest, R.drawable.ratikka);
+			addLineOfInterestRowToLayout(R.id.ferriesOfInterest, R.drawable.lautta);
 		}
 	}
+	
+	private void addLineOfInterestRowToLayout(int viewId, int drawableId) {
+		LayoutInflater inflater = (LayoutInflater) getApplicationContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+		View view = inflater.inflate(R.layout.lines_of_interest, null);
+		view.setId(viewId);
+		ImageView imageView = (ImageView) view.findViewById(R.id.lineTypeImageView);
+		imageView.setImageResource(drawableId);
+	
+		mainLayout.addView(view, 1);
+	}
 
+	
+	private void updateDynamicLinesOfInterestViews(UserProfile profile) {
+		updateDynamicRowOfInterestView(R.id.bussesOfInterest, R.drawable.bussi, profile);
+		updateDynamicRowOfInterestView(R.id.metrosOfInterest, R.drawable.metro, profile);
+		updateDynamicRowOfInterestView(R.id.tramsOfInterest, R.drawable.ratikka, profile);
+		updateDynamicRowOfInterestView(R.id.ferriesOfInterest, R.drawable.lautta, profile);
+	}
+	
+	private void updateDynamicRowOfInterestView(int viewId, int drawableId, UserProfile profile) {
+		View view = mainLayout.findViewById(viewId);
+		TextView textView = (TextView) view.findViewById(R.id.linesOfInterestTextView);
+		String lineCodesConcatenated = "";
+		for(TransportLine line : profile.linesOfInterest) {
+			if(TransportLineAdapter.getDrawableId(line) == drawableId) {
+				lineCodesConcatenated += line.shortCode + " ";
+			}
+		}
+		
+		textView.setText(lineCodesConcatenated);
+		if(lineCodesConcatenated.length() > 0) {
+			view.setVisibility(View.VISIBLE);
+		} else {
+			view.setVisibility(View.GONE);
+		}
+				
+	}	
+
+	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 
 		MenuInflater inflater = getMenuInflater();
@@ -146,10 +139,33 @@ public class MainActivity extends RoboActivity implements UserSignalListener, Fi
                 return false;
         }
     }
-	
 
-	public void setGCMRegistrationService(GCMRegistrationService service) {
-		this.gcmRegistrationService = service;
+	@Override
+	public void transportLineClicked(TransportLine line) {
+		Log.d(TAG, "transportLineClicked: " + line.shortCode + " " + line.transportType);
+		
+		TransportLineAdapter listAdapter = (TransportLineAdapter) linesListView.getAdapter();
+		listAdapter.remove(line);
+		listAdapter.notifyDataSetChanged();
+		
+		userProfileFactory.getUserProfile(this).linesOfInterest.add(line);
+		updateDynamicLinesOfInterestViews(userProfileFactory.getUserProfile(this));
+		userProfileFactory.signalChangeInLinesOfInterest();
+		
+		Log.d(TAG, "reached");
+	
+	}
+	
+	@Override
+	public void receiveFindLinesResult(List<TransportLine> lines) {
+		
+		if(lines != null) {
+			TransportLineAdapter adapter = new TransportLineAdapter(this, R.layout.line_list_row, lines, this);
+			linesListView.setAdapter(adapter);
+			adapter.notifyDataSetChanged();			
+		} else {
+			Toast.makeText(this, "search failed", Toast.LENGTH_LONG).show();
+		}
 	}
 
 

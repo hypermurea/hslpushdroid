@@ -5,4 +5,5 @@
     <string name="search_title">Search!</string>
 	<string name="app_label">HSLPushdroid</string>
 	<string name="search_hint">Kirjoita linjan nimi</string>
+	<string name="lineTypeImageViewContentDescription">Linjan tyyppi</string>
 </resources>

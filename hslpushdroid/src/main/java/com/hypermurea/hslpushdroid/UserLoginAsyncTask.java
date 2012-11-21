@@ -4,53 +4,60 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.http.NameValuePair;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
-import org.apache.http.client.ResponseHandler;
-import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
+import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.BasicResponseHandler;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.message.BasicNameValuePair;
 import org.json.JSONArray;
 import org.json.JSONException;
 
 import android.os.AsyncTask;
 import android.util.Log;
 
-public class UserLoginAsyncTask extends AsyncTask<String,Void,List<String>> {
+public class UserLoginAsyncTask extends AsyncTask<UserProfile,Void,Boolean> {
 
-	public static final int UUID = 0;
-	public static final int REGISTRATION_ID = 1;
-	
 	private final String TAG = "UserLoginAsyncTask";
-	
-	private UserSignalListener listener;
+
 	private String serviceUrl;
+	private UserSignalListener[] listeners;
 	
-	public UserLoginAsyncTask(String serviceUrl) {
+	public UserLoginAsyncTask(String serviceUrl, UserSignalListener... listeners) {
 		this.serviceUrl = serviceUrl;
+		this.listeners = listeners;
 	}
-	
+
 	@Override
-	protected List<String> doInBackground(String... params) {
-		String queryString = "/gcm?uuid=" + params[UUID] + "&regId=" + params[REGISTRATION_ID]; 
+	protected Boolean doInBackground(UserProfile... profile) {
 
 		HttpClient httpClient = new DefaultHttpClient();
-		HttpGet request = new HttpGet(serviceUrl + queryString);
-		
-		Log.d(TAG, serviceUrl+queryString);
-		ResponseHandler<String> responseHandler = new BasicResponseHandler();
+		String query = "/gcm";
+		HttpPost request = new HttpPost(serviceUrl + query);
 
-		List<String> linesOfInterest = null;
+		boolean loginSuccess = false;
 		
 		try {
+
+			List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>(3);
+			nameValuePairs.add(new BasicNameValuePair("uuid", profile[0].uuid));
+			nameValuePairs.add(new BasicNameValuePair("regId", profile[0].registrationId));
+			nameValuePairs.add(new BasicNameValuePair("lofJson", TransportLine.getJsonArray(profile[0].linesOfInterest).toString()));
+			request.setEntity(new UrlEncodedFormEntity(nameValuePairs));
+
+			Log.d(TAG, serviceUrl + query);
+			
+			Log.d(TAG, TransportLine.getJsonArray(profile[0].linesOfInterest).toString());
+			BasicResponseHandler responseHandler = new BasicResponseHandler();
+
 			String responseString = httpClient.execute(request, responseHandler);
 			JSONArray response = new JSONArray(responseString);
-			
-			linesOfInterest = new ArrayList<String>();
-			for( int i = 0; i < response.length(); i ++) {
-				linesOfInterest.add(response.getString(i));
-			}	
-			
+
+			loginSuccess = true;
+
+
 		} catch (ClientProtocolException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
@@ -58,21 +65,21 @@ public class UserLoginAsyncTask extends AsyncTask<String,Void,List<String>> {
 		} catch(JSONException e) {
 			e.printStackTrace();
 		}
-		
-		return linesOfInterest;
+
+		return loginSuccess;
 	}
-	
+
 	@Override
-	public void onPostExecute(List<String> result) {
-		if(result != null) {
-			listener.signalUserLoggedIn(result);
+	public void onPostExecute(Boolean result) {
+		if(result) {
+			for(UserSignalListener listener: listeners) {
+				listener.signalUserLoggedIn();				
+			}
 		} else {
-			listener.signalLoginFailed();
+			for(UserSignalListener listener: listeners) {
+				listener.signalLoginFailed();			
+			}
 		}
-	}
-	
-	public void setUserSignalListener(UserSignalListener listener) {
-		this.listener = listener;
 	}
 
 }

@@ -44,7 +44,7 @@ public class UserLoginAsyncTask extends AsyncTask<UserProfile,Void,Boolean> {
 			List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>(3);
 			nameValuePairs.add(new BasicNameValuePair("uuid", profile[0].uuid));
 			nameValuePairs.add(new BasicNameValuePair("regId", profile[0].registrationId));
-			nameValuePairs.add(new BasicNameValuePair("lofJson", TransportLine.getJsonArray(profile[0].linesOfInterest).toString()));
+			nameValuePairs.add(new BasicNameValuePair("lof", TransportLine.getJsonArray(profile[0].linesOfInterest).toString()));
 			request.setEntity(new UrlEncodedFormEntity(nameValuePairs));
 
 			Log.d(TAG, serviceUrl + query);
@@ -53,9 +53,11 @@ public class UserLoginAsyncTask extends AsyncTask<UserProfile,Void,Boolean> {
 			BasicResponseHandler responseHandler = new BasicResponseHandler();
 
 			String responseString = httpClient.execute(request, responseHandler);
-			JSONArray response = new JSONArray(responseString);
-
-			loginSuccess = true;
+			if(responseString.equals("OK")) {
+				loginSuccess = true;
+			} else {
+				Log.e(TAG, "Login failed, response string: " + responseString);
+			}
 
 
 		} catch (ClientProtocolException e) {

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="hello">list of watched traffic lines</string>
-    <string name="app_name">hslpushdroid</string>
+    <string name="app_name">HSLPushdroid</string>
     <string name="search_title">Search!</string>
 	<string name="app_label">HSLPushdroid</string>
 	<string name="search_hint">Kirjoita linjan nimi</string>

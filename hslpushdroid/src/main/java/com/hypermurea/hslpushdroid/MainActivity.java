@@ -2,13 +2,14 @@ package com.hypermurea.hslpushdroid;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import com.google.inject.Inject;
 
 import android.annotation.SuppressLint;
+import android.app.AlertDialog;
 import android.app.SearchManager;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
@@ -18,20 +19,19 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.ExpandableListView;
-import android.widget.FrameLayout;
+import android.view.Window;
+import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.SearchView;
-import android.widget.SimpleExpandableListAdapter;
-import android.widget.TextView;
 import android.widget.Toast;
 import roboguice.activity.RoboActivity;
 import roboguice.inject.InjectView;
 
 @SuppressLint("NewApi")
-public class MainActivity extends RoboActivity implements FindLinesResultListener, TransportLineClickListener {
+public class MainActivity extends RoboActivity implements FindLinesResultListener, LinesOfInterestChangeListener {
 
 	private static String TAG = "hslpushdroid";
 
@@ -44,11 +44,15 @@ public class MainActivity extends RoboActivity implements FindLinesResultListene
 	@Inject private FindLinesByNameAsyncTask findLinesTask;
 	@Inject private UserProfileFactory userProfileFactory;
 	
+	private int backgroundTasksRunning = 0;
+	
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		
 		super.onCreate(savedInstanceState);
 		
+		requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
+		this.setProgressBarIndeterminateVisibility(false);
 		setContentView(R.layout.main);
 		
 		injectDynamicLinesOfInterestViewsToLayout();
@@ -93,22 +97,48 @@ public class MainActivity extends RoboActivity implements FindLinesResultListene
 	}
 	
 	private void updateDynamicRowOfInterestView(int viewId, int drawableId, UserProfile profile) {
+		
 		View view = mainLayout.findViewById(viewId);
-		TextView textView = (TextView) view.findViewById(R.id.linesOfInterestTextView);
+		Button linesOfInterestButton = (Button) view.findViewById(R.id.linesOfInterestButton);
 		String lineCodesConcatenated = "";
+		List<TransportLine> lines = new ArrayList<TransportLine>();
 		for(TransportLine line : profile.linesOfInterest) {
 			if(TransportLineAdapter.getDrawableId(line) == drawableId) {
 				lineCodesConcatenated += line.shortCode + " ";
+				lines.add(line);
 			}
 		}
 		
-		textView.setText(lineCodesConcatenated);
+		linesOfInterestButton.setText(lineCodesConcatenated);
+		
 		if(lineCodesConcatenated.length() > 0) {
 			view.setVisibility(View.VISIBLE);
 		} else {
 			view.setVisibility(View.GONE);
 		}
-				
+		
+		final ArrayAdapter<TransportLine> adapter = new ArrayAdapter<TransportLine>(this,
+		        android.R.layout.simple_spinner_dropdown_item, lines);
+		
+		linesOfInterestButton.setOnClickListener(new View.OnClickListener() {
+			public void onClick(View view) {
+				  new AlertDialog.Builder(MainActivity.this)
+				  .setTitle("Poista seurattavia linjoja")
+				  .setAdapter(adapter, new DialogInterface.OnClickListener() {
+
+				    @Override
+				    public void onClick(DialogInterface dialog, int which) {
+
+				      ListView items = ((AlertDialog) dialog).getListView();
+				      MainActivity.this.removeTransportLine((TransportLine) items.getAdapter().getItem(which));
+				     
+				      dialog.dismiss();
+				    }
+				  }).create().show();
+				}
+        });
+		
+
 	}	
 
 	@Override
@@ -141,7 +171,14 @@ public class MainActivity extends RoboActivity implements FindLinesResultListene
     }
 
 	@Override
-	public void transportLineClicked(TransportLine line) {
+	public void removeTransportLine(TransportLine line) {
+		userProfileFactory.getUserProfile(this).linesOfInterest.remove(line);
+		updateDynamicLinesOfInterestViews(userProfileFactory.getUserProfile(this));
+		userProfileFactory.signalChangeInLinesOfInterest();
+	}
+	
+	@Override
+	public void addTransportLine(TransportLine line) {
 		Log.d(TAG, "transportLineClicked: " + line.shortCode + " " + line.transportType);
 		
 		TransportLineAdapter listAdapter = (TransportLineAdapter) linesListView.getAdapter();
@@ -166,6 +203,30 @@ public class MainActivity extends RoboActivity implements FindLinesResultListene
 		} else {
 			Toast.makeText(this, "search failed", Toast.LENGTH_LONG).show();
 		}
+	}
+	
+	public void backgroundTaskStarted() {
+		backgroundTasksRunning++;
+		if(backgroundTasksRunning > 0) {
+			synchronized(this) {
+				if(backgroundTasksRunning > 0) {
+					this.setProgressBarIndeterminateVisibility(true);					
+				}
+			}
+		}
+
+	}
+	
+	public void backgroundTaskEnded() {
+		backgroundTasksRunning--;
+		if(backgroundTasksRunning == 0) {
+			synchronized(this) {
+				if(backgroundTasksRunning == 0) {
+					this.setProgressBarIndeterminateVisibility(false);
+				}
+			}
+		}
+		
 	}
 
 

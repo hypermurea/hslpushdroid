@@ -12,7 +12,6 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.BasicResponseHandler;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicNameValuePair;
-import org.json.JSONArray;
 import org.json.JSONException;
 
 import android.os.AsyncTask;
@@ -47,9 +46,9 @@ public class UserLoginAsyncTask extends AsyncTask<UserProfile,Void,Boolean> {
 			nameValuePairs.add(new BasicNameValuePair("lof", TransportLine.getJsonArray(profile[0].linesOfInterest).toString()));
 			request.setEntity(new UrlEncodedFormEntity(nameValuePairs));
 
-			Log.d(TAG, serviceUrl + query);
+			Log.d(TAG, "Invoking login from url: " + serviceUrl + query);
 			
-			Log.d(TAG, TransportLine.getJsonArray(profile[0].linesOfInterest).toString());
+			Log.d(TAG, "Lines of interest: " + TransportLine.getJsonArray(profile[0].linesOfInterest).toString());
 			BasicResponseHandler responseHandler = new BasicResponseHandler();
 
 			String responseString = httpClient.execute(request, responseHandler);

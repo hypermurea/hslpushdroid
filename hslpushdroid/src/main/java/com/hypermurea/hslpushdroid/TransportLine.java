@@ -70,8 +70,6 @@ public class TransportLine {
 		return object;
 	}
 
-
-	// TODO remove ugly
 	public String toString() {
 		return this.shortCode + " " + name;
 	}

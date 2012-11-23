@@ -66,7 +66,7 @@ public class UserProfileFactory {
 	
 	private List<TransportLine> getTransportLines(SharedPreferences preferences) {
 		final String TRANSPORT_LINES_JSON = "transport_lines";
-		String transportLinesJson = preferences.getString(TRANSPORT_LINES_JSON, "{[]}");
+		String transportLinesJson = preferences.getString(TRANSPORT_LINES_JSON, "[]");
 		return TransportLine.getTransportLines(transportLinesJson);
 	}
 	
@@ -75,6 +75,7 @@ public class UserProfileFactory {
 				new BroadcastReceiver() {
 					@Override
 					public void onReceive(Context ctx, Intent intent) {
+						profile.registrationId = intent.getExtras().getString(GCMRegistrationService.REGISTRATION_ID);
 						UserLoginAsyncTask task = new UserLoginAsyncTask(serviceUrl, profile);
 						task.execute(profile); 	 
 					}

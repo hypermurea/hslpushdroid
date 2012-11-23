@@ -16,6 +16,7 @@ public class UserProfile implements UserSignalListener {
 	public void signalUserLoggedIn() {
 		latestUserStateCommitted = true;
 	}
+	
 	@Override
 	public void signalLoginFailed() {
 		latestUserStateCommitted = false;

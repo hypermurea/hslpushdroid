@@ -16,7 +16,7 @@ import android.widget.TextView;
 public class TransportLineAdapter extends ArrayAdapter<TransportLine> {
 
 	private LayoutInflater inflater;
-	private TransportLineClickListener clickListener;
+	private LinesOfInterestChangeListener clickListener;
 
 	private static SparseIntArray transportImageMap; 
 	private static int[][] transportToImage = {
@@ -67,7 +67,7 @@ public class TransportLineAdapter extends ArrayAdapter<TransportLine> {
 
 
 	public TransportLineAdapter(Context context, int textViewResourceId,
-			List<TransportLine> objects, TransportLineClickListener listener) {
+			List<TransportLine> objects, LinesOfInterestChangeListener listener) {
 		super(context, textViewResourceId, objects);
 		inflater = LayoutInflater.from(context);
 		this.clickListener = listener;
@@ -106,7 +106,7 @@ public class TransportLineAdapter extends ArrayAdapter<TransportLine> {
 		
 		@Override
 		public void onClick(View v) {
-			TransportLineAdapter.this.clickListener.transportLineClicked(line);
+			TransportLineAdapter.this.clickListener.addTransportLine(line);
 		}
 		
 	}

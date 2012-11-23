@@ -9,16 +9,18 @@
         android:layout_height="wrap_content"
         android:layout_alignParentLeft="true"
         android:layout_alignParentTop="true"
-        android:src="@drawable/bussi"
-        android:contentDescription="@string/lineTypeImageViewContentDescription"/>
+        android:gravity=""
+        android:contentDescription="@string/lineTypeImageViewContentDescription"
+        android:src="@drawable/bussi" />
 
-    <TextView
-        android:id="@+id/linesOfInterestTextView"
-        android:layout_width="wrap_content"
+    <Button
+        android:id="@+id/linesOfInterestButton"
+        android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentTop="true"
         android:layout_toRightOf="@+id/lineTypeImageView"
-        android:text=""
+        android:background="@android:drawable/btn_dropdown"
+        android:drawSelectorOnTop="true"
         android:textAppearance="?android:attr/textAppearanceSmall" />
 
 </RelativeLayout>

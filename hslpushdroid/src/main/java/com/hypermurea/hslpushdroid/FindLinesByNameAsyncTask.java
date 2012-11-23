@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 
 import org.apache.http.client.ClientProtocolException;
@@ -40,6 +39,9 @@ public class FindLinesByNameAsyncTask extends AsyncTask<String,Void,List<Transpo
 
 	@Override
 	protected List<TransportLine> doInBackground(String... searchTerms) {
+		
+		listener.backgroundTaskStarted();
+		
 		MessageFormat baseUrl = 
 				new MessageFormat(serviceUrl + "?request=lines&format=json&user={0}&pass={1}&query={2}");
 
@@ -85,6 +87,7 @@ public class FindLinesByNameAsyncTask extends AsyncTask<String,Void,List<Transpo
 
 	@Override
 	public void onPostExecute(List<TransportLine> result) {
+		listener.backgroundTaskEnded();
 		listener.receiveFindLinesResult(result);
 	}
 

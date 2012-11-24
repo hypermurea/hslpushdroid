@@ -52,12 +52,13 @@ public class MainActivity extends RoboActivity implements FindLinesResultListene
 		super.onCreate(savedInstanceState);
 		
 		requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
-		this.setProgressBarIndeterminateVisibility(false);
 		setContentView(R.layout.main);
 		
 		injectDynamicLinesOfInterestViewsToLayout();
 		updateDynamicLinesOfInterestViews(userProfileFactory.getUserProfile(this));
 		
+		setProgressBarIndeterminateVisibility(false);
+
 		Intent intent = getIntent();
 		if (Intent.ACTION_SEARCH.equals(intent.getAction())) {
 			String query = intent.getStringExtra(SearchManager.QUERY);
@@ -174,7 +175,7 @@ public class MainActivity extends RoboActivity implements FindLinesResultListene
 	public void removeTransportLine(TransportLine line) {
 		userProfileFactory.getUserProfile(this).linesOfInterest.remove(line);
 		updateDynamicLinesOfInterestViews(userProfileFactory.getUserProfile(this));
-		userProfileFactory.signalChangeInLinesOfInterest();
+		userProfileFactory.signalChangeInLinesOfInterest(this);
 	}
 	
 	@Override
@@ -187,7 +188,7 @@ public class MainActivity extends RoboActivity implements FindLinesResultListene
 		
 		userProfileFactory.getUserProfile(this).linesOfInterest.add(line);
 		updateDynamicLinesOfInterestViews(userProfileFactory.getUserProfile(this));
-		userProfileFactory.signalChangeInLinesOfInterest();
+		userProfileFactory.signalChangeInLinesOfInterest(this);
 		
 		Log.d(TAG, "reached");
 	
@@ -205,6 +206,7 @@ public class MainActivity extends RoboActivity implements FindLinesResultListene
 		}
 	}
 	
+	@Override
 	public void backgroundTaskStarted() {
 		backgroundTasksRunning++;
 		if(backgroundTasksRunning > 0) {
@@ -217,6 +219,7 @@ public class MainActivity extends RoboActivity implements FindLinesResultListene
 
 	}
 	
+	@Override
 	public void backgroundTaskEnded() {
 		backgroundTasksRunning--;
 		if(backgroundTasksRunning == 0) {

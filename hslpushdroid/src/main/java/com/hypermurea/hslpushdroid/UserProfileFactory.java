@@ -29,7 +29,7 @@ public class UserProfileFactory {
 		this.serviceUrl = serviceUrl;
 	}
 	
-	public UserProfile getUserProfile(Activity activity) {		
+	public UserProfile getUserProfile(MainActivity activity) {		
 		if(profile == null) {
 			SharedPreferences preferences = activity.getPreferences(Context.MODE_PRIVATE);
 			
@@ -44,8 +44,8 @@ public class UserProfileFactory {
 		return profile;
 	}
 	
-	public void signalChangeInLinesOfInterest() {
-		UserLoginAsyncTask task = new UserLoginAsyncTask(serviceUrl, profile);
+	public void signalChangeInLinesOfInterest(BackgroundTaskListener progressListener) {
+		UserLoginAsyncTask task = new UserLoginAsyncTask(serviceUrl, progressListener, profile);
 		task.execute(profile);
 	}
 	
@@ -70,13 +70,13 @@ public class UserProfileFactory {
 		return TransportLine.getTransportLines(transportLinesJson);
 	}
 	
-	private void userListensToGcmRegistration(Activity activity) {
+	private void userListensToGcmRegistration(final MainActivity activity) {
 		activity.registerReceiver(
 				new BroadcastReceiver() {
 					@Override
 					public void onReceive(Context ctx, Intent intent) {
 						profile.registrationId = intent.getExtras().getString(GCMRegistrationService.REGISTRATION_ID);
-						UserLoginAsyncTask task = new UserLoginAsyncTask(serviceUrl, profile);
+						UserLoginAsyncTask task = new UserLoginAsyncTask(serviceUrl, activity, profile);
 						task.execute(profile); 	 
 					}
 				}, new IntentFilter(GCMRegistrationService.REGISTERED_ACTION));		

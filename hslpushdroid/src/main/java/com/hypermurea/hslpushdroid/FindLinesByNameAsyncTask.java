@@ -36,11 +36,13 @@ public class FindLinesByNameAsyncTask extends AsyncTask<String,Void,List<Transpo
 		this.password = password;
 	}
 
-
+	@Override 
+	public void onPreExecute() {
+		listener.backgroundTaskStarted();
+	}
+	
 	@Override
 	protected List<TransportLine> doInBackground(String... searchTerms) {
-		
-		listener.backgroundTaskStarted();
 		
 		MessageFormat baseUrl = 
 				new MessageFormat(serviceUrl + "?request=lines&format=json&user={0}&pass={1}&query={2}");

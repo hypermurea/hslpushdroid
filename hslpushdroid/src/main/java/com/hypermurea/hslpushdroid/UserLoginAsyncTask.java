@@ -22,16 +22,25 @@ public class UserLoginAsyncTask extends AsyncTask<UserProfile,Void,Boolean> {
 	private final String TAG = "UserLoginAsyncTask";
 
 	private String serviceUrl;
+	private BackgroundTaskListener progressListener; 
 	private UserSignalListener[] listeners;
 	
-	public UserLoginAsyncTask(String serviceUrl, UserSignalListener... listeners) {
+	
+	public UserLoginAsyncTask(String serviceUrl, BackgroundTaskListener progress, UserSignalListener... listeners) {
 		this.serviceUrl = serviceUrl;
+		this.progressListener = progress;
 		this.listeners = listeners;
 	}
 
+	@Override 
+	public void onPreExecute() {
+		progressListener.backgroundTaskStarted();
+	}
+	
 	@Override
 	protected Boolean doInBackground(UserProfile... profile) {
 
+		
 		HttpClient httpClient = new DefaultHttpClient();
 		String query = "/gcm";
 		HttpPost request = new HttpPost(serviceUrl + query);
@@ -69,9 +78,10 @@ public class UserLoginAsyncTask extends AsyncTask<UserProfile,Void,Boolean> {
 
 		return loginSuccess;
 	}
-
+	
 	@Override
 	public void onPostExecute(Boolean result) {
+		progressListener.backgroundTaskEnded();
 		if(result) {
 			for(UserSignalListener listener: listeners) {
 				listener.signalUserLoggedIn();				

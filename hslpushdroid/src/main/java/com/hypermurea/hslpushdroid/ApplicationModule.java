@@ -14,6 +14,8 @@ import com.google.inject.Singleton;
 import com.hypermurea.hslpushdroid.gcm.DevelopmentGCMRegistrationService;
 import com.hypermurea.hslpushdroid.gcm.GCMRegistrationService;
 import com.hypermurea.hslpushdroid.gcm.LiveGCMRegistrationService;
+import com.hypermurea.hslpushdroid.reittiopas.FindLinesByNameAsyncTask;
+import com.hypermurea.hslpushdroid.user.UserProfileFactory;
 
 public class ApplicationModule extends AbstractModule {
 	

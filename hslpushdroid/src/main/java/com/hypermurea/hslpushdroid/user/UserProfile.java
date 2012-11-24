@@ -1,7 +1,7 @@
-package com.hypermurea.hslpushdroid;
+package com.hypermurea.hslpushdroid.user;
 import java.util.List;
 
-import com.hypermurea.hslpushdroid.TransportLine;
+import com.hypermurea.hslpushdroid.reittiopas.TransportLine;
 
 
 public class UserProfile implements UserSignalListener {

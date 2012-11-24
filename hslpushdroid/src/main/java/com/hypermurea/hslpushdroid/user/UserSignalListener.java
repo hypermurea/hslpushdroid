@@ -1,4 +1,4 @@
-package com.hypermurea.hslpushdroid;
+package com.hypermurea.hslpushdroid.user;
 
 public interface UserSignalListener {
 

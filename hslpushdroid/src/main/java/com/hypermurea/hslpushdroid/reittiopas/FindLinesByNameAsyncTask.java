@@ -1,4 +1,4 @@
-package com.hypermurea.hslpushdroid;
+package com.hypermurea.hslpushdroid.reittiopas;
 
 import java.io.IOException;
 import java.text.MessageFormat;
@@ -15,6 +15,7 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+
 
 import android.os.AsyncTask;
 import android.util.Log;

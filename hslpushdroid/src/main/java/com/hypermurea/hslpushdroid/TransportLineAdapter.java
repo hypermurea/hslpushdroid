@@ -2,6 +2,8 @@ package com.hypermurea.hslpushdroid;
 
 import java.util.List;
 
+import com.hypermurea.hslpushdroid.reittiopas.TransportLine;
+
 import android.content.Context;
 import android.util.SparseIntArray;
 import android.view.LayoutInflater;

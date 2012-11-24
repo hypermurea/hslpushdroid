@@ -1,6 +1,8 @@
-package com.hypermurea.hslpushdroid;
+package com.hypermurea.hslpushdroid.reittiopas;
 
 import java.util.List;
+
+import com.hypermurea.hslpushdroid.BackgroundTaskListener;
 
 public interface FindLinesResultListener extends BackgroundTaskListener {
 

@@ -4,6 +4,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.google.inject.Inject;
+import com.hypermurea.hslpushdroid.reittiopas.FindLinesByNameAsyncTask;
+import com.hypermurea.hslpushdroid.reittiopas.FindLinesResultListener;
+import com.hypermurea.hslpushdroid.reittiopas.TransportLine;
+import com.hypermurea.hslpushdroid.user.UserProfile;
+import com.hypermurea.hslpushdroid.user.UserProfileFactory;
 
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;

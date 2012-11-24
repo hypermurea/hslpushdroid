@@ -1,4 +1,4 @@
-package com.hypermurea.hslpushdroid;
+package com.hypermurea.hslpushdroid.user;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -13,6 +13,9 @@ import org.apache.http.impl.client.BasicResponseHandler;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicNameValuePair;
 import org.json.JSONException;
+
+import com.hypermurea.hslpushdroid.BackgroundTaskListener;
+import com.hypermurea.hslpushdroid.reittiopas.TransportLine;
 
 import android.os.AsyncTask;
 import android.util.Log;

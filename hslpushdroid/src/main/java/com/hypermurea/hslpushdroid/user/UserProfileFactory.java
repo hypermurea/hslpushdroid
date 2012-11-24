@@ -1,10 +1,13 @@
-package com.hypermurea.hslpushdroid;
+package com.hypermurea.hslpushdroid.user;
 
 import java.util.List;
 import java.util.UUID;
 
 import com.google.inject.Inject;
+import com.hypermurea.hslpushdroid.BackgroundTaskListener;
+import com.hypermurea.hslpushdroid.MainActivity;
 import com.hypermurea.hslpushdroid.gcm.GCMRegistrationService;
+import com.hypermurea.hslpushdroid.reittiopas.TransportLine;
 
 import android.app.Activity;
 import android.content.BroadcastReceiver;

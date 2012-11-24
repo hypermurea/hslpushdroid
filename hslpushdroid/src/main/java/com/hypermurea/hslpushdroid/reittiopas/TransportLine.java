@@ -1,4 +1,4 @@
-package com.hypermurea.hslpushdroid;
+package com.hypermurea.hslpushdroid.reittiopas;
 
 import java.util.ArrayList;
 import java.util.HashSet;

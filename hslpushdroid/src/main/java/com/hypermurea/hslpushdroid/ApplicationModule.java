@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
 
+import android.content.Context;
 import android.content.res.Resources;
 import android.os.Build;
 import android.util.Log;
@@ -78,8 +79,15 @@ public class ApplicationModule extends AbstractModule {
 		return new UserProfileFactory(gcmRegistrationService, environmentConfig.getProperty(HSLPUSH_BASE_URL));
 	}
 	
+	@Provides
+	@Singleton
+	public LocationUpdateAgent getLocationUpdateAgent(Context ctx) {
+		return new LocationUpdateAgent(ctx);
+	}
+	
 	private boolean isRunningOnSimulator() {
-		return Build.BRAND.startsWith("generic") && Build.DEVICE.startsWith("generic");
+		// this check is not guaranteed to work with all simulators
+		return Build.BRAND.startsWith("generic") || Build.DEVICE.startsWith("generic");
 	}
 	
 

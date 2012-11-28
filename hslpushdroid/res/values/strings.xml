@@ -6,4 +6,5 @@
 	<string name="app_label">HSLPushdroid</string>
 	<string name="search_hint">Kirjoita linjan nimi</string>
 	<string name="lineTypeImageViewContentDescription">Linjan tyyppi</string>
+	<string name="searchNearbyLinesCheckboxText">Paikanna liikennevälineitä</string>
 </resources>

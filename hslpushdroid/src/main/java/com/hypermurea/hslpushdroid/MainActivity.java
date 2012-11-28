@@ -16,6 +16,8 @@ import android.app.SearchManager;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.location.Location;
+import android.location.LocationListener;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
@@ -27,6 +29,7 @@ import android.view.View;
 import android.view.Window;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
@@ -46,8 +49,12 @@ public class MainActivity extends RoboActivity implements FindLinesResultListene
 	@InjectView(R.id.linesListView) 
 	private ListView linesListView;
 	
+	@InjectView(R.id.searchNearbyLinesCheckBox)
+	private CheckBox searchNearbyLinesCheckBox;
+	
 	@Inject private FindLinesByNameAsyncTask findLinesTask;
 	@Inject private UserProfileFactory userProfileFactory;
+	@Inject private LocationUpdateAgent locationUpdateAgent;
 	
 	private int backgroundTasksRunning = 0;
 	
@@ -209,6 +216,18 @@ public class MainActivity extends RoboActivity implements FindLinesResultListene
 		} else {
 			Toast.makeText(this, "search failed", Toast.LENGTH_LONG).show();
 		}
+	}
+	
+	public void searchNearbyLinesToggled(View view) {    
+		
+		if(((CheckBox) view).isChecked()) {
+			Log.d(TAG, "Starting location updates");
+			locationUpdateAgent.startLocationUpdates();
+		} else {
+			Log.d(TAG, "Stopping location updates");
+			locationUpdateAgent.stopLocationUpdates();
+		}
+		
 	}
 	
 	@Override

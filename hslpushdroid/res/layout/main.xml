@@ -12,6 +12,14 @@
         android:text=""
         android:textAppearance="?android:attr/textAppearanceSmall" />
 
+    <CheckBox
+        android:id="@+id/searchNearbyLinesCheckBox"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:checked="false"
+        android:text="@string/searchNearbyLinesCheckboxText"
+        android:onClick="searchNearbyLinesToggled" />
+
     <ListView
         android:id="@+id/linesListView"
         android:layout_width="match_parent"

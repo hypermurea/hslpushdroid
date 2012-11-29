@@ -8,7 +8,6 @@ import com.hypermurea.hslpushdroid.reittiopas.FindLinesByNameAsyncTask;
 import com.hypermurea.hslpushdroid.reittiopas.FindLinesResultListener;
 import com.hypermurea.hslpushdroid.reittiopas.NearbyStopsListener;
 import com.hypermurea.hslpushdroid.reittiopas.StopInfo;
-import com.hypermurea.hslpushdroid.reittiopas.StopUpdateListener;
 import com.hypermurea.hslpushdroid.reittiopas.TransportLine;
 import com.hypermurea.hslpushdroid.user.UserProfile;
 import com.hypermurea.hslpushdroid.user.UserProfileFactory;
@@ -40,7 +39,7 @@ import roboguice.activity.RoboActivity;
 import roboguice.inject.InjectView;
 
 @SuppressLint("NewApi")
-public class MainActivity extends RoboActivity implements FindLinesResultListener, LinesOfInterestChangeListener, StopUpdateListener {
+public class MainActivity extends RoboActivity implements FindLinesResultListener, LinesOfInterestChangeListener {
 
 	private static String TAG = "hslpushdroid";
 
@@ -256,14 +255,5 @@ public class MainActivity extends RoboActivity implements FindLinesResultListene
 		}
 		
 	}
-
-	@Override
-	public void transportLineStopsUpdate(List<StopInfo> stops) {
-		for(StopInfo stop: stops) {
-			Log.d(TAG, "stop: " + stop.code + " " + stop.passingLines.toString());
-		}
-		Toast.makeText(this, "received stops update", Toast.LENGTH_LONG).show();
-	}
-
 
 }

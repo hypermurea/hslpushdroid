@@ -1,8 +1,10 @@
 package com.hypermurea.hslpushdroid.reittiopas;
 
+import java.net.URLEncoder;
 import java.text.MessageFormat;
-import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.ResponseHandler;
@@ -15,37 +17,42 @@ import org.json.JSONObject;
 import android.os.AsyncTask;
 import android.util.Log;
 
-public class FindStopsByLocationAsyncTask extends AsyncTask<String,Void,List<StopInfo>> {
+public class FindStopsByLocationAsyncTask extends AsyncTask<String,Void,Void> implements FindLinesResultListener {
 
+	public static final int LATITUDE = 0;
+	public static final int LONGITUDE = 1;
+	
 	private static final String TAG = "FindStopsByLocationAsyncTask";
 	private static final int SEARCH_DIAMETER_METERS = 500;
-	
-	
+
 	private String user;
 	private String password;
 	private String serviceUrl;
-	private StopUpdateListener listener;
-	
-	public FindStopsByLocationAsyncTask(String serviceUrl, String user, String password, StopUpdateListener listener) {
+
+	private FindLinesResultListener listener;
+	private Set<String> nearbyLineCodes;
+
+	public FindStopsByLocationAsyncTask(String serviceUrl, String user, String password, FindLinesResultListener listener) {
 		super();
 		this.serviceUrl = serviceUrl;
 		this.user = user;
 		this.password = password;
 		this.listener = listener;
+		nearbyLineCodes = new HashSet<String>();
 	}
 
 	@Override 
 	public void onPreExecute() {
 		listener.backgroundTaskStarted();
 	}
-	
-	
+
+
 	@Override
-	protected List<StopInfo> doInBackground(String... params) {
+	protected Void doInBackground(String... params) {
 		MessageFormat baseUrl = 
 				new MessageFormat(serviceUrl + "?user={0}&pass={1}&request={2}&epsg_in=wgs84&format=json&center_coordinate={3},{4}&diameter={5}");
 
-		String[] args = {user, password, "stops_area", "24.88083", "60.19701", String.valueOf(SEARCH_DIAMETER_METERS)};		
+		String[] args = {user, password, "stops_area", params[LONGITUDE], params[LATITUDE], String.valueOf(SEARCH_DIAMETER_METERS)};		
 
 		HttpClient httpClient = new DefaultHttpClient();
 		HttpGet request = new HttpGet(baseUrl.format(args));
@@ -53,59 +60,82 @@ public class FindStopsByLocationAsyncTask extends AsyncTask<String,Void,List<Sto
 		Log.d(TAG, baseUrl.format(args));
 		ResponseHandler<String> responseHandler = new BasicResponseHandler();
 
-		List<StopInfo> stops = new ArrayList<StopInfo>();
-		
 		try {
 			String responseString = httpClient.execute(request, responseHandler);
 			JSONArray response = new JSONArray(responseString);
-			
+
 			for(int i = 0; i < response.length(); i ++) {
 				String stopCode = response.getJSONObject(i).getString("code");
-				stops.add(new StopInfo(stopCode, getPassingLines(stopCode)));
+				nearbyLineCodes.addAll(getPassingLineCodes(stopCode));
 			}
-			
+
+			String query = "";
+			for(String s: nearbyLineCodes) {
+				query += s + "|";
+			}
+			query = query.substring(0,  query.length() - 1);
+
+			FindLinesByNameAsyncTask findByNameTask = new FindLinesByNameAsyncTask(serviceUrl, user, password);
+			findByNameTask.setFindLinesResultListener(listener);
+			findByNameTask.execute(URLEncoder.encode(query, "utf-8"));
+
 		} catch(Exception e) {
 			Log.e(TAG, "find stops by location failed", e);
 		}
-		
-		return stops;
+
+		return null;
 	}
-	
-	private List<TransportLine> getPassingLines(String stopCode) throws Exception {
+
+	private Set<String> getPassingLineCodes(String stopCode) throws Exception {
 		MessageFormat baseUrl = 
 				new MessageFormat(serviceUrl + "?user={0}&pass={1}&request={2}&format=json&code={3}");
 
 		String[] args = {user, password, "stop", stopCode};		
 
 		Log.d(TAG, baseUrl.format(args));
-		
+
 		HttpClient httpClient = new DefaultHttpClient();
 		HttpGet request = new HttpGet(baseUrl.format(args));	
-		
+
 		ResponseHandler<String> responseHandler = new BasicResponseHandler();
 		String responseString = httpClient.execute(request, responseHandler);
 		JSONObject stopJson = new JSONArray(responseString).getJSONObject(0);
-		
-		List<TransportLine> linesPassing = new ArrayList<TransportLine>();
+
+		Set<String> passingLineCodes = new HashSet<String>();
 		JSONArray linesPassingStopJson = stopJson.getJSONArray("lines");
-		for(int i = 0; i <linesPassingStopJson.length(); i ++) {
-			JSONObject lineJson = linesPassingStopJson.getJSONObject(i);
-			TransportLine line = new TransportLine("TODO", 0, lineJson.toString());
-			linesPassing.add(line);
+		//for(int i = 0; i < linesPassingStopJson.length(); i ++) {
+		for(int i = 0; i < linesPassingStopJson.length(); i ++) {
+			passingLineCodes.add(linesPassingStopJson.get(i).toString().split(":")[0]);
 		}
-		
-		return linesPassing;
+
+		return passingLineCodes;
 	}
-	
-	
+
+
 	@Override
-	public void onPostExecute(List<StopInfo> result) {
+	public void onPostExecute(Void result) {
 		listener.backgroundTaskEnded();
-		Log.d(TAG, "Reporting found stops, number of stops: " + result.size());
-		listener.transportLineStopsUpdate(new ArrayList<StopInfo>());
+		Log.d(TAG, "Reporting found nearby lines, number of lines: " + nearbyLineCodes.size());
+		//listener.transportLineStopsUpdate(result);
 	}
-	
+
+	@Override
+	public void backgroundTaskStarted() {
+		listener.backgroundTaskStarted();
+
+	}
+
+	@Override
+	public void backgroundTaskEnded() {
+		listener.backgroundTaskEnded();
+	}
+
+	@Override
+	public void receiveFindLinesResult(List<TransportLine> lines) {
+		listener.receiveFindLinesResult(lines);
+	}
+
 	// reittiopas api wants coordinates in format lon/lat
 	// api.reittiopas.fi/hsl/prod/?request=stops_area&epsg_in=wgs84&center_coordinate=24.88083,60.19701
-	
+
 }

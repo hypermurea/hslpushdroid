@@ -20,7 +20,7 @@ public class NearbyStopsListener implements LocationListener {
 	private String user;
 	private String password;
 	
-	private StopUpdateListener listener;
+	private FindLinesResultListener listener;
 	// TODO implement to avoid querying for the same stop data over and over again
 	//private HashMap<String,StopInfo> stopCache = new HashMap<String, StopInfo>();
 	
@@ -31,7 +31,7 @@ public class NearbyStopsListener implements LocationListener {
 		this.password = password;
 	}
 	
-	public void startListeningToStopUpdates(StopUpdateListener listener) {
+	public void startListeningToStopUpdates(FindLinesResultListener listener) {
 		this.listener = listener;
 		locationUpdateAgent.startLocationUpdates(this);
 	}
@@ -44,7 +44,8 @@ public class NearbyStopsListener implements LocationListener {
 	public void onLocationChanged(Location location) {
 		Log.d(TAG, "onLocationChanged");
 		FindStopsByLocationAsyncTask task = new FindStopsByLocationAsyncTask(serviceUrl, user, password, listener);
-		task.execute();
+		String params[] = {String.valueOf(location.getLatitude()), String.valueOf(location.getLongitude())};
+		task.execute(params);
 	}
 
 

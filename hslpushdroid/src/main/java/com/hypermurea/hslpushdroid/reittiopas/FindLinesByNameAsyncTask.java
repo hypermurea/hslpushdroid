@@ -1,6 +1,7 @@
 package com.hypermurea.hslpushdroid.reittiopas;
 
 import java.io.IOException;
+import java.net.URLEncoder;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.HashMap;

@@ -16,6 +16,7 @@ import com.hypermurea.hslpushdroid.gcm.DevelopmentGCMRegistrationService;
 import com.hypermurea.hslpushdroid.gcm.GCMRegistrationService;
 import com.hypermurea.hslpushdroid.gcm.LiveGCMRegistrationService;
 import com.hypermurea.hslpushdroid.reittiopas.FindLinesByNameAsyncTask;
+import com.hypermurea.hslpushdroid.reittiopas.NearbyStopsListener;
 import com.hypermurea.hslpushdroid.user.UserProfileFactory;
 
 public class ApplicationModule extends AbstractModule {
@@ -30,9 +31,7 @@ public class ApplicationModule extends AbstractModule {
 	
 	@Override
 	protected void configure() {
-		
 		requestStaticInjection(EnvironmentConfig.class);
-	
 	}
 	
 	/** Google Cloud Messaging cannot be used on the default simulator, therefore it needs to be disabled for development */
@@ -78,11 +77,14 @@ public class ApplicationModule extends AbstractModule {
 	public UserProfileFactory getUserProfileFactory(GCMRegistrationService gcmRegistrationService, Properties environmentConfig) {
 		return new UserProfileFactory(gcmRegistrationService, environmentConfig.getProperty(HSLPUSH_BASE_URL));
 	}
-	
+
 	@Provides
 	@Singleton
-	public LocationUpdateAgent getLocationUpdateAgent(Context ctx) {
-		return new LocationUpdateAgent(ctx);
+	public NearbyStopsListener getNearbyStopsListener(Context ctx, Properties environmentConfig) {
+		return new NearbyStopsListener(new LocationUpdateAgent(ctx), 
+				environmentConfig.getProperty(REITTIOPAS_BASE_URL),
+				environmentConfig.getProperty(REITTIOPAS_USER_ID),
+				environmentConfig.getProperty(REITTIOPAS_PASSWORD));
 	}
 	
 	private boolean isRunningOnSimulator() {

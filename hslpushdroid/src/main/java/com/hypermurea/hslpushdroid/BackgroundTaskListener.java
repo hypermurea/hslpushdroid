@@ -1,6 +1,6 @@
 package com.hypermurea.hslpushdroid;
 
 public interface BackgroundTaskListener {
-	public void backgroundTaskStarted();
-	public void backgroundTaskEnded();
+	void backgroundTaskStarted();
+	void backgroundTaskEnded();
 }

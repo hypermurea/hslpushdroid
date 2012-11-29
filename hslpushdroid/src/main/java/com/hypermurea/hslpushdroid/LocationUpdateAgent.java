@@ -1,14 +1,12 @@
 package com.hypermurea.hslpushdroid;
 
 import android.content.Context;
-import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
-import android.util.Log;
 
-public class LocationUpdateAgent implements LocationListener {
+public class LocationUpdateAgent {
 	
 	private final static String TAG = "LocationUpdateAgent";
 	
@@ -28,8 +26,8 @@ public class LocationUpdateAgent implements LocationListener {
 		return isLocationProviderAvailable() && locationManager.isProviderEnabled(getBestProvider());
 	}
 	
-	public void startLocationUpdates() {
-		locationManager.requestLocationUpdates(getBestProvider(), 10000, 10, this);
+	public void startLocationUpdates(LocationListener listener) {
+		locationManager.requestLocationUpdates(getBestProvider(), 10000, 10, listener);
 	}
 	
 	private String getBestProvider() {
@@ -43,36 +41,12 @@ public class LocationUpdateAgent implements LocationListener {
 		return LocationManager.GPS_PROVIDER;
 	}
 	
-	public void stopLocationUpdates() {
-		locationManager.removeUpdates(this);
+	public void stopLocationUpdates(LocationListener listener) {
+		locationManager.removeUpdates(listener);
 	}
 
 
-	@Override
-	public void onLocationChanged(Location location) {
-		Log.e(TAG, "location obtained (" + location.getProvider() + "), lat:" + location.getLatitude() + ", long:" + location.getLongitude());		
-	}
-
-
-	@Override
-	public void onProviderDisabled(String provider) {
-		// TODO Auto-generated method stub
-		
-	}
-
-
-	@Override
-	public void onProviderEnabled(String provider) {
-		// TODO Auto-generated method stub
-		
-	}
-
-
-	@Override
-	public void onStatusChanged(String provider, int status, Bundle extras) {
-		// TODO Auto-generated method stub
-		
-	}
+	
 	
 	/**
 	 * 

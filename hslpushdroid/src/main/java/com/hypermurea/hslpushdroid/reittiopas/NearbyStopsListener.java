@@ -1,8 +1,5 @@
 package com.hypermurea.hslpushdroid.reittiopas;
 
-import java.util.HashMap;
-import java.util.List;
-
 import android.location.Location;
 import android.location.LocationListener;
 import android.os.Bundle;
@@ -44,8 +41,7 @@ public class NearbyStopsListener implements LocationListener {
 	public void onLocationChanged(Location location) {
 		Log.d(TAG, "onLocationChanged");
 		FindStopsByLocationAsyncTask task = new FindStopsByLocationAsyncTask(serviceUrl, user, password, listener);
-		String params[] = {String.valueOf(location.getLatitude()), String.valueOf(location.getLongitude())};
-		task.execute(params);
+		task.execute(location);
 	}
 
 

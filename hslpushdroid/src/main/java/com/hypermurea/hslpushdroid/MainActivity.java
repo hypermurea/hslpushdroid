@@ -7,7 +7,6 @@ import com.google.inject.Inject;
 import com.hypermurea.hslpushdroid.reittiopas.FindLinesByNameAsyncTask;
 import com.hypermurea.hslpushdroid.reittiopas.FindLinesResultListener;
 import com.hypermurea.hslpushdroid.reittiopas.NearbyStopsListener;
-import com.hypermurea.hslpushdroid.reittiopas.StopInfo;
 import com.hypermurea.hslpushdroid.reittiopas.TransportLine;
 import com.hypermurea.hslpushdroid.user.UserProfile;
 import com.hypermurea.hslpushdroid.user.UserProfileFactory;
@@ -49,19 +48,23 @@ public class MainActivity extends RoboActivity implements FindLinesResultListene
 	@InjectView(R.id.linesListView) 
 	private ListView linesListView;
 	
-	@InjectView(R.id.searchNearbyLinesCheckBox)
-	private CheckBox searchNearbyLinesCheckBox;
-	
 	@Inject private FindLinesByNameAsyncTask findLinesTask;
 	@Inject private UserProfileFactory userProfileFactory;
 	@Inject private NearbyStopsListener nearbyStopsListener;
 	
 	private int backgroundTasksRunning = 0;
 	
+	// TODO Implement hashset to store currently existing search results
+	private static final String BUNDLED_LINE_SEARCH_RESULTS = "bundled_line_search_results";
+	private TransportLineAdapter searchResultsAdapter;
+	private ArrayList<TransportLine> currentLineSearchResults = new ArrayList<TransportLine>();
+	
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		
 		super.onCreate(savedInstanceState);
+		
+		//TODO Restore hashset of search results
 		
 		requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
 		setContentView(R.layout.main);
@@ -71,6 +74,15 @@ public class MainActivity extends RoboActivity implements FindLinesResultListene
 		
 		setProgressBarIndeterminateVisibility(false);
 
+		if(savedInstanceState != null) {
+			ArrayList<TransportLine> bundledResults = savedInstanceState.getParcelableArrayList(BUNDLED_LINE_SEARCH_RESULTS);
+			currentLineSearchResults.addAll(bundledResults);
+		}
+		searchResultsAdapter = new TransportLineAdapter(this, R.layout.line_list_row, currentLineSearchResults, this);
+		linesListView.setAdapter(searchResultsAdapter);
+		searchResultsAdapter.notifyDataSetChanged();
+		
+		
 		Intent intent = getIntent();
 		if (Intent.ACTION_SEARCH.equals(intent.getAction())) {
 			String query = intent.getStringExtra(SearchManager.QUERY);
@@ -80,6 +92,11 @@ public class MainActivity extends RoboActivity implements FindLinesResultListene
 
 		}
 		
+	}
+	
+	@Override
+	public void onSaveInstanceState(Bundle bundle) {
+		bundle.putParcelableArrayList(BUNDLED_LINE_SEARCH_RESULTS, currentLineSearchResults);
 	}
 	
 	private void injectDynamicLinesOfInterestViewsToLayout() {
@@ -207,12 +224,11 @@ public class MainActivity extends RoboActivity implements FindLinesResultListene
 	}
 	
 	@Override
-	public void receiveFindLinesResult(List<TransportLine> lines) {
-		
+	public void receiveFindLinesResult(List<TransportLine> lines) {	
 		if(lines != null) {
-			TransportLineAdapter adapter = new TransportLineAdapter(this, R.layout.line_list_row, lines, this);
-			linesListView.setAdapter(adapter);
-			adapter.notifyDataSetChanged();			
+			currentLineSearchResults.clear();
+			currentLineSearchResults.addAll(lines);
+			searchResultsAdapter.notifyDataSetChanged();			
 		} else {
 			Toast.makeText(this, "search failed", Toast.LENGTH_LONG).show();
 		}

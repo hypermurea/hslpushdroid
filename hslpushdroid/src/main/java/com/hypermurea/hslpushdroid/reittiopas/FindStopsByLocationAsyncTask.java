@@ -3,7 +3,6 @@ package com.hypermurea.hslpushdroid.reittiopas;
 import java.net.URLEncoder;
 import java.text.MessageFormat;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 import org.apache.http.client.HttpClient;
@@ -14,14 +13,12 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import android.location.Location;
 import android.os.AsyncTask;
 import android.util.Log;
 
-public class FindStopsByLocationAsyncTask extends AsyncTask<String,Void,Void> implements FindLinesResultListener {
+public class FindStopsByLocationAsyncTask extends AsyncTask<Location,Void,Void> {
 
-	public static final int LATITUDE = 0;
-	public static final int LONGITUDE = 1;
-	
 	private static final String TAG = "FindStopsByLocationAsyncTask";
 	private static final int SEARCH_DIAMETER_METERS = 500;
 
@@ -32,6 +29,9 @@ public class FindStopsByLocationAsyncTask extends AsyncTask<String,Void,Void> im
 	private FindLinesResultListener listener;
 	private Set<String> nearbyLineCodes;
 
+	// reittiopas api wants coordinates in format lon/lat
+	// api.reittiopas.fi/hsl/prod/?request=stops_area&epsg_in=wgs84&center_coordinate=24.88083,60.19701
+	
 	public FindStopsByLocationAsyncTask(String serviceUrl, String user, String password, FindLinesResultListener listener) {
 		super();
 		this.serviceUrl = serviceUrl;
@@ -48,11 +48,17 @@ public class FindStopsByLocationAsyncTask extends AsyncTask<String,Void,Void> im
 
 
 	@Override
-	protected Void doInBackground(String... params) {
+	protected Void doInBackground(Location... location) {
 		MessageFormat baseUrl = 
 				new MessageFormat(serviceUrl + "?user={0}&pass={1}&request={2}&epsg_in=wgs84&format=json&center_coordinate={3},{4}&diameter={5}");
 
-		String[] args = {user, password, "stops_area", params[LONGITUDE], params[LATITUDE], String.valueOf(SEARCH_DIAMETER_METERS)};		
+		String[] args = {
+				user, 
+				password, 
+				"stops_area", 
+				String.valueOf(location[0].getLongitude()), 
+				String.valueOf(location[0].getLatitude()),
+				String.valueOf(SEARCH_DIAMETER_METERS)};		
 
 		HttpClient httpClient = new DefaultHttpClient();
 		HttpGet request = new HttpGet(baseUrl.format(args));
@@ -69,6 +75,7 @@ public class FindStopsByLocationAsyncTask extends AsyncTask<String,Void,Void> im
 				nearbyLineCodes.addAll(getPassingLineCodes(stopCode));
 			}
 
+			// TODO Move this inside the task, so that it can use a string array as parameters
 			String query = "";
 			for(String s: nearbyLineCodes) {
 				query += s + "|";
@@ -103,7 +110,6 @@ public class FindStopsByLocationAsyncTask extends AsyncTask<String,Void,Void> im
 
 		Set<String> passingLineCodes = new HashSet<String>();
 		JSONArray linesPassingStopJson = stopJson.getJSONArray("lines");
-		//for(int i = 0; i < linesPassingStopJson.length(); i ++) {
 		for(int i = 0; i < linesPassingStopJson.length(); i ++) {
 			passingLineCodes.add(linesPassingStopJson.get(i).toString().split(":")[0]);
 		}
@@ -116,26 +122,6 @@ public class FindStopsByLocationAsyncTask extends AsyncTask<String,Void,Void> im
 	public void onPostExecute(Void result) {
 		listener.backgroundTaskEnded();
 		Log.d(TAG, "Reporting found nearby lines, number of lines: " + nearbyLineCodes.size());
-		//listener.transportLineStopsUpdate(result);
 	}
-
-	@Override
-	public void backgroundTaskStarted() {
-		listener.backgroundTaskStarted();
-
-	}
-
-	@Override
-	public void backgroundTaskEnded() {
-		listener.backgroundTaskEnded();
-	}
-
-	@Override
-	public void receiveFindLinesResult(List<TransportLine> lines) {
-		listener.receiveFindLinesResult(lines);
-	}
-
-	// reittiopas api wants coordinates in format lon/lat
-	// api.reittiopas.fi/hsl/prod/?request=stops_area&epsg_in=wgs84&center_coordinate=24.88083,60.19701
 
 }

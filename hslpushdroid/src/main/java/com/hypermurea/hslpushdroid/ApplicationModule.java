@@ -15,8 +15,8 @@ import com.google.inject.Singleton;
 import com.hypermurea.hslpushdroid.gcm.DevelopmentGCMRegistrationService;
 import com.hypermurea.hslpushdroid.gcm.GCMRegistrationService;
 import com.hypermurea.hslpushdroid.gcm.LiveGCMRegistrationService;
-import com.hypermurea.hslpushdroid.reittiopas.FindLinesByNameAsyncTask;
-import com.hypermurea.hslpushdroid.reittiopas.NearbyStopsListener;
+import com.hypermurea.hslpushdroid.reittiopas.FindLinesService;
+import com.hypermurea.hslpushdroid.reittiopas.FindLinesServiceImpl;
 import com.hypermurea.hslpushdroid.user.UserProfileFactory;
 
 public class ApplicationModule extends AbstractModule {
@@ -66,11 +66,6 @@ public class ApplicationModule extends AbstractModule {
 		
 		return properties;
 	}
-	
-	@Provides
-	public FindLinesByNameAsyncTask getFindLinesByNameAsyncTask(Properties environmentConfig) {
-		return new FindLinesByNameAsyncTask(environmentConfig.getProperty(REITTIOPAS_BASE_URL), environmentConfig.getProperty(REITTIOPAS_USER_ID), environmentConfig.getProperty(REITTIOPAS_PASSWORD));
-	}
 		
 	@Provides
 	@Singleton
@@ -80,11 +75,11 @@ public class ApplicationModule extends AbstractModule {
 
 	@Provides
 	@Singleton
-	public NearbyStopsListener getNearbyStopsListener(Context ctx, Properties environmentConfig) {
-		return new NearbyStopsListener(new LocationUpdateAgent(ctx), 
-				environmentConfig.getProperty(REITTIOPAS_BASE_URL),
+	public FindLinesService getFindLinesService(Context ctx, Properties environmentConfig) {
+		return new FindLinesServiceImpl(environmentConfig.getProperty(REITTIOPAS_BASE_URL),
 				environmentConfig.getProperty(REITTIOPAS_USER_ID),
-				environmentConfig.getProperty(REITTIOPAS_PASSWORD));
+				environmentConfig.getProperty(REITTIOPAS_PASSWORD),
+				new LocationUpdateAgent(ctx));
 	}
 	
 	private boolean isRunningOnSimulator() {

@@ -1,6 +1,7 @@
 package com.hypermurea.hslpushdroid.reittiopas;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.text.MessageFormat;
 import java.util.ArrayList;
@@ -31,39 +32,41 @@ public class FindLinesByNameAsyncTask extends AsyncTask<String,Void,List<Transpo
 
 	private FindLinesResultListener listener;
 
-	public FindLinesByNameAsyncTask(String serviceUrl, String user, String password) {
-		super();
+	public FindLinesByNameAsyncTask(String serviceUrl, String user, String password, FindLinesResultListener resultListener) {
 		this.serviceUrl = serviceUrl;
 		this.user = user;
 		this.password = password;
+		this.listener = resultListener;
 	}
 
 	@Override 
 	public void onPreExecute() {
 		listener.backgroundTaskStarted();
 	}
-	
+
 	@Override
 	protected List<TransportLine> doInBackground(String... searchTerms) {
-		
+
 		MessageFormat baseUrl = 
 				new MessageFormat(serviceUrl + "?request=lines&format=json&user={0}&pass={1}&query={2}");
-
-		String[] args = {user, password, searchTerms[0]};		
-
-		HttpClient httpClient = new DefaultHttpClient();
-		HttpGet request = new HttpGet(baseUrl.format(args));
-
-		Log.d(TAG, baseUrl.format(args));
-		ResponseHandler<String> responseHandler = new BasicResponseHandler();
 
 		List<TransportLine> searchResult = null;
 
 		try {
+
+			String[] args = {user, password, buildQuery(searchTerms)};		
+
+			HttpClient httpClient = new DefaultHttpClient();
+			HttpGet request = new HttpGet(baseUrl.format(args));
+
+			Log.d(TAG, baseUrl.format(args));
+			ResponseHandler<String> responseHandler = new BasicResponseHandler();
+
+			searchResult = new ArrayList<TransportLine>();
+
 			String responseString = httpClient.execute(request, responseHandler);
 			JSONArray response = new JSONArray(responseString);
 
-			searchResult = new ArrayList<TransportLine>();
 			HashMap<String, TransportLine> resultHash = new HashMap<String, TransportLine>();
 			for( int i = 0; i < response.length(); i ++) {
 				JSONObject lineJson = response.getJSONObject(i);
@@ -75,7 +78,7 @@ public class FindLinesByNameAsyncTask extends AsyncTask<String,Void,List<Transpo
 				} 
 				resultHash.get(key).codes.add(lineJson.getString("code"));
 			}	
-			
+
 
 		} catch (ClientProtocolException e) {
 			e.printStackTrace();
@@ -89,14 +92,18 @@ public class FindLinesByNameAsyncTask extends AsyncTask<String,Void,List<Transpo
 
 	}
 
+	private String buildQuery(String... params) throws UnsupportedEncodingException {
+		String query = "|";
+		for(String s: params) {
+			query += s + "|";
+		}
+		return URLEncoder.encode(query.substring(1,  query.length() - 1), "utf-8");
+	}
+
 	@Override
 	public void onPostExecute(List<TransportLine> result) {
 		listener.backgroundTaskEnded();
 		listener.receiveFindLinesResult(result);
-	}
-
-	public void setFindLinesResultListener(FindLinesResultListener listener) {
-		this.listener = listener;
 	}
 
 }

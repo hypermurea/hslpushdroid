@@ -40,8 +40,6 @@ public class NearbyStopsListener implements LocationListener {
 	@Override
 	public void onLocationChanged(Location location) {
 		Log.d(TAG, "onLocationChanged");
-		FindStopsByLocationAsyncTask task = new FindStopsByLocationAsyncTask(serviceUrl, user, password, listener);
-		task.execute(location);
 	}
 
 

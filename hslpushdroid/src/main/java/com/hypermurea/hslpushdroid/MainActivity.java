@@ -6,6 +6,7 @@ import java.util.List;
 import com.google.inject.Inject;
 import com.hypermurea.hslpushdroid.reittiopas.FindLinesByNameAsyncTask;
 import com.hypermurea.hslpushdroid.reittiopas.FindLinesResultListener;
+import com.hypermurea.hslpushdroid.reittiopas.FindLinesService;
 import com.hypermurea.hslpushdroid.reittiopas.NearbyStopsListener;
 import com.hypermurea.hslpushdroid.reittiopas.TransportLine;
 import com.hypermurea.hslpushdroid.user.UserProfile;
@@ -48,9 +49,8 @@ public class MainActivity extends RoboActivity implements FindLinesResultListene
 	@InjectView(R.id.linesListView) 
 	private ListView linesListView;
 	
-	@Inject private FindLinesByNameAsyncTask findLinesTask;
 	@Inject private UserProfileFactory userProfileFactory;
-	@Inject private NearbyStopsListener nearbyStopsListener;
+	@Inject private FindLinesService findLinesService;
 	
 	private int backgroundTasksRunning = 0;
 	
@@ -87,9 +87,7 @@ public class MainActivity extends RoboActivity implements FindLinesResultListene
 		if (Intent.ACTION_SEARCH.equals(intent.getAction())) {
 			String query = intent.getStringExtra(SearchManager.QUERY);
 
-			findLinesTask.setFindLinesResultListener(this);
-			findLinesTask.execute(query);
-
+			findLinesService.findLinesByName(this, query);
 		}
 		
 	}
@@ -238,10 +236,10 @@ public class MainActivity extends RoboActivity implements FindLinesResultListene
 		
 		if(((CheckBox) view).isChecked()) {
 			Log.d(TAG, "Starting location updates");
-			nearbyStopsListener.startListeningToStopUpdates(this);
+			findLinesService.startFindingLinesByLocation(this);
 		} else {
 			Log.d(TAG, "Stopping location updates");
-			nearbyStopsListener.stopListeningToStopUpdates();
+			findLinesService.stopFindingLinesByLocation();
 		}
 		
 	}

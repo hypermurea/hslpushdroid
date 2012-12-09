@@ -10,7 +10,6 @@ import android.util.Log;
 
 import com.google.android.gcm.GCMBaseIntentService;
 import com.hypermurea.hslpushdroid.R;
-import com.hypermurea.hslpushdroid.R.drawable;
 
 public class GCMIntentService extends GCMBaseIntentService {
 	

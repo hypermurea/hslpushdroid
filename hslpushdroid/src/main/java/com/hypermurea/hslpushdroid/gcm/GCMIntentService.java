@@ -56,14 +56,18 @@ public class GCMIntentService extends GCMBaseIntentService {
 	}
 
 	@Override
-	protected void onRegistered(Context context, String registrationId) {
+	protected void onRegistered(Context ctx, String registrationId) {
 		// TODO Auto-generated method stub
 		Log.e(TAG, "onRegistered invoked");
+		broadcastRegistrationId(ctx, registrationId);
+	}
+	
+	public static void broadcastRegistrationId(Context ctx, String registrationId) {
 		Intent intent = new Intent();
 		intent.setAction(GCMRegistrationService.REGISTERED_ACTION);
 		intent.putExtra(GCMRegistrationService.REGISTRATION_ID, registrationId);
-		Log.e(TAG, "registrationId acquired: " + registrationId);
-		context.sendBroadcast(intent);
+		Log.d(TAG, "registrationId acquired: " + registrationId);
+		ctx.sendBroadcast(intent);
 	}
 
 	@Override

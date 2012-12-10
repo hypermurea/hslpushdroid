@@ -31,11 +31,14 @@
         android:layout_height="wrap_content"
         android:layout_alignBottom="@+id/lineName"
         android:layout_alignParentLeft="true"
+        android:layout_alignParentTop="false"
+        android:layout_alignTop="@id/lineCode"
         android:layout_centerHorizontal="true"
         android:layout_centerInParent="true"
         android:layout_centerVertical="true"
         android:contentDescription="Liikenneväline"
-        android:src="@drawable/juna" />
+        android:scaleType="fitXY"
+        android:src="@drawable/lautta" />
 
     <ImageButton
         android:id="@+id/trackLineImageButton"

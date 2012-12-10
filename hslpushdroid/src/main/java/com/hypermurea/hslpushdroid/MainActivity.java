@@ -4,10 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.google.inject.Inject;
-import com.hypermurea.hslpushdroid.reittiopas.FindLinesByNameAsyncTask;
 import com.hypermurea.hslpushdroid.reittiopas.FindLinesResultListener;
 import com.hypermurea.hslpushdroid.reittiopas.FindLinesService;
-import com.hypermurea.hslpushdroid.reittiopas.NearbyStopsListener;
 import com.hypermurea.hslpushdroid.reittiopas.TransportLine;
 import com.hypermurea.hslpushdroid.user.UserProfile;
 import com.hypermurea.hslpushdroid.user.UserProfileFactory;
@@ -85,8 +83,10 @@ public class MainActivity extends RoboActivity implements FindLinesResultListene
 		
 		Intent intent = getIntent();
 		if (Intent.ACTION_SEARCH.equals(intent.getAction())) {
+			currentLineSearchResults.clear();
+			searchResultsAdapter.notifyDataSetChanged();
+			
 			String query = intent.getStringExtra(SearchManager.QUERY);
-
 			findLinesService.findLinesByName(this, query);
 		}
 		
@@ -224,18 +224,40 @@ public class MainActivity extends RoboActivity implements FindLinesResultListene
 	@Override
 	public void receiveFindLinesResult(List<TransportLine> lines) {	
 		if(lines != null) {
-			currentLineSearchResults.clear();
-			currentLineSearchResults.addAll(lines);
-			searchResultsAdapter.notifyDataSetChanged();			
+			
+			boolean newResults = false;
+			for(TransportLine line : lines) {
+				if(!searchResultsContains(line)) {
+					Log.d(TAG, "search results do not contain: " + line.shortCode);
+					currentLineSearchResults.add(line);
+					newResults = true;
+				}
+			}
+			if(newResults) {
+				searchResultsAdapter.notifyDataSetChanged();			
+			}
+			
 		} else {
 			Toast.makeText(this, "search failed", Toast.LENGTH_LONG).show();
 		}
 	}
 	
+	private boolean searchResultsContains(TransportLine pendingAdd) {
+		for(TransportLine line : currentLineSearchResults) {
+			if(line.shortCode.equals(pendingAdd.shortCode)) {
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	
 	public void searchNearbyLinesToggled(View view) {    
 		
 		if(((CheckBox) view).isChecked()) {
 			Log.d(TAG, "Starting location updates");
+			currentLineSearchResults.clear();
+			searchResultsAdapter.notifyDataSetChanged();
 			findLinesService.startFindingLinesByLocation(this);
 		} else {
 			Log.d(TAG, "Stopping location updates");

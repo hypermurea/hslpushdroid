@@ -30,32 +30,27 @@ public class FindLinesByNameAsyncTask extends AsyncTask<String,Void,List<Transpo
 	private String user;
 	private String password;
 
-	private FindLinesResultListener listener;
+	private TaskResultListener<List<TransportLine>> listener;
 
-	public FindLinesByNameAsyncTask(String serviceUrl, String user, String password, FindLinesResultListener resultListener) {
+	public FindLinesByNameAsyncTask(String serviceUrl, String user, String password, TaskResultListener<List<TransportLine>> resultListener) {
 		this.serviceUrl = serviceUrl;
 		this.user = user;
 		this.password = password;
 		this.listener = resultListener;
 	}
 
-	@Override 
-	public void onPreExecute() {
-		listener.backgroundTaskStarted();
-	}
-
 	@Override
 	protected List<TransportLine> doInBackground(String... searchTerms) {
 
-		MessageFormat baseUrl = 
-				new MessageFormat(serviceUrl + "?request=lines&format=json&user={0}&pass={1}&query={2}");
-
-		List<TransportLine> searchResult = null;
+		List<TransportLine> searchResult = null;	
 
 		try {
 
-			String[] args = {user, password, buildQuery(searchTerms)};		
-
+			MessageFormat baseUrl = 
+					new MessageFormat(serviceUrl + "?request=lines&format=json&user={0}&pass={1}&query={2}");
+			
+			String[] args = {user, password, buildQuery(searchTerms)};
+			
 			HttpClient httpClient = new DefaultHttpClient();
 			HttpGet request = new HttpGet(baseUrl.format(args));
 
@@ -79,7 +74,6 @@ public class FindLinesByNameAsyncTask extends AsyncTask<String,Void,List<Transpo
 				resultHash.get(key).codes.add(lineJson.getString("code"));
 			}	
 
-
 		} catch (ClientProtocolException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
@@ -93,17 +87,17 @@ public class FindLinesByNameAsyncTask extends AsyncTask<String,Void,List<Transpo
 	}
 
 	private String buildQuery(String... params) throws UnsupportedEncodingException {
-		String query = "|";
+		String query = "";
 		for(String s: params) {
 			query += s + "|";
 		}
-		return URLEncoder.encode(query.substring(1,  query.length() - 1), "utf-8");
+		Log.d(TAG, "building query: " + query);
+		return URLEncoder.encode(query.substring(0,  query.length() - 1), "utf-8");
 	}
 
 	@Override
 	public void onPostExecute(List<TransportLine> result) {
-		listener.backgroundTaskEnded();
-		listener.receiveFindLinesResult(result);
+		listener.receiveResults(result);
 	}
 
 }

@@ -77,9 +77,10 @@ public class UserProfileFactory {
 				new BroadcastReceiver() {
 					@Override
 					public void onReceive(Context ctx, Intent intent) {
-						profile.registrationId = intent.getExtras().getString(GCMRegistrationService.REGISTRATION_ID);
-						UserLoginAsyncTask task = new UserLoginAsyncTask(serviceUrl, activity, profile);
-						task.execute(profile); 	 
+						activity.unregisterReceiver(this);
+						UserProfileFactory.profile.registrationId = intent.getExtras().getString(GCMRegistrationService.REGISTRATION_ID);
+						UserLoginAsyncTask task = new UserLoginAsyncTask(serviceUrl, activity, UserProfileFactory.profile);
+						task.execute(UserProfileFactory.profile); 	 
 					}
 				}, new IntentFilter(GCMRegistrationService.REGISTERED_ACTION));		
 	}

@@ -40,8 +40,7 @@ public class ApplicationModule extends AbstractModule {
 		if(isRunningOnSimulator()) {
 			return new DevelopmentGCMRegistrationService();
 		} else {
-			LiveGCMRegistrationService service = new LiveGCMRegistrationService();
-			service.setSenderId(environmentConfig.getProperty(GCM_SENDER_ID));
+			LiveGCMRegistrationService service = new LiveGCMRegistrationService(environmentConfig.getProperty(GCM_SENDER_ID));
 			return service;
 		}		
 	}

@@ -23,16 +23,23 @@ public class LocationUpdateAgent {
 	}
 	
 	public void startLocationUpdates(LocationListener listener) {
+		if(!requestLocationUpdatesIfProviderEnabled(LocationManager.NETWORK_PROVIDER, listener)) {
+			requestLocationUpdatesIfProviderEnabled(LocationManager.GPS_PROVIDER, listener);
+		}
+	}
+	
+	private boolean requestLocationUpdatesIfProviderEnabled(String provider, LocationListener listener) {
 		final int MINIMUM_DISTANCE_BETWEEN_LOCATION_UPDATES = 10;
 		final int MINIMUM_TIME_BETWEEN_LOCATION_UPDATES = 2000;
-		locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 
-				MINIMUM_TIME_BETWEEN_LOCATION_UPDATES, 
-				MINIMUM_DISTANCE_BETWEEN_LOCATION_UPDATES, 
-				listener);
-		locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 
-				MINIMUM_TIME_BETWEEN_LOCATION_UPDATES, 
-				MINIMUM_DISTANCE_BETWEEN_LOCATION_UPDATES, 
-				listener);
+		if(locationManager.isProviderEnabled(provider)) {
+			locationManager.requestLocationUpdates(provider, 
+					MINIMUM_TIME_BETWEEN_LOCATION_UPDATES, 
+					MINIMUM_DISTANCE_BETWEEN_LOCATION_UPDATES, 
+					listener);
+			return true;
+		} else {
+			return false;
+		}
 	}
 		
 	public void stopLocationUpdates(LocationListener listener) {

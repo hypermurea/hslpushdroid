@@ -65,7 +65,7 @@ public class FindLinesServiceImpl implements FindLinesService, LocationListener 
 				}
 
 			});
-			task.execute();
+			task.execute(refinedLines);
 
 		}
 

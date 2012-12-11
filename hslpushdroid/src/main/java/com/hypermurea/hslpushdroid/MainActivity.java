@@ -3,8 +3,8 @@ package com.hypermurea.hslpushdroid;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.google.ads.AdView;
 import com.google.inject.Inject;
-import com.hypermurea.hslpushdroid.reittiopas.FindLinesResultListener;
 import com.hypermurea.hslpushdroid.reittiopas.FindLinesService;
 import com.hypermurea.hslpushdroid.reittiopas.TransportLine;
 import com.hypermurea.hslpushdroid.user.UserProfile;
@@ -37,7 +37,7 @@ import roboguice.activity.RoboActivity;
 import roboguice.inject.InjectView;
 
 @SuppressLint("NewApi")
-public class MainActivity extends RoboActivity implements FindLinesResultListener, LinesOfInterestChangeListener {
+public class MainActivity extends RoboActivity implements TaskResultListener<List<TransportLine>>, LinesOfInterestChangeListener {
 
 	private static String TAG = "hslpushdroid";
 
@@ -49,6 +49,7 @@ public class MainActivity extends RoboActivity implements FindLinesResultListene
 	
 	@Inject private UserProfileFactory userProfileFactory;
 	@Inject private FindLinesService findLinesService;
+	@Inject private AdViewFactory adViewFactory;
 	
 	private int backgroundTasksRunning = 0;
 	
@@ -65,13 +66,20 @@ public class MainActivity extends RoboActivity implements FindLinesResultListene
 		//TODO Restore hashset of search results
 		
 		requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
+		
 		setContentView(R.layout.main);
+		
 		
 		injectDynamicLinesOfInterestViewsToLayout();
 		updateDynamicLinesOfInterestViews(userProfileFactory.getUserProfile(this));
 		
 		setProgressBarIndeterminateVisibility(false);
 
+		LinearLayout mainLayout = (LinearLayout) this.findViewById(R.id.mainLinearLayout);
+		AdView adView = (AdView) adViewFactory.getAdView(this, mainLayout);
+		mainLayout.addView(adView);
+		adView.loadAd(adViewFactory.getAdRequest());
+				
 		if(savedInstanceState != null) {
 			ArrayList<TransportLine> bundledResults = savedInstanceState.getParcelableArrayList(BUNDLED_LINE_SEARCH_RESULTS);
 			currentLineSearchResults.addAll(bundledResults);
@@ -222,7 +230,7 @@ public class MainActivity extends RoboActivity implements FindLinesResultListene
 	}
 	
 	@Override
-	public void receiveFindLinesResult(List<TransportLine> lines) {	
+	public void receiveResults(List<TransportLine> lines) {	
 		if(lines != null) {
 			
 			boolean newResults = false;
@@ -276,11 +284,10 @@ public class MainActivity extends RoboActivity implements FindLinesResultListene
 				}
 			}
 		}
-
 	}
 	
 	@Override
-	public void backgroundTaskEnded() {
+	public void backgroundTaskStopped() {
 		backgroundTasksRunning--;
 		if(backgroundTasksRunning == 0) {
 			synchronized(this) {

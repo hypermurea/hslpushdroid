@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Set;
 
 import com.hypermurea.hslpushdroid.LocationUpdateAgent;
+import com.hypermurea.hslpushdroid.TaskResultListener;
 
 import android.location.Location;
 import android.location.LocationListener;
@@ -17,7 +18,7 @@ public class FindLinesServiceImpl implements FindLinesService, LocationListener 
 	private String password;
 	private String serviceUrl;
 	private LocationUpdateAgent locationUpdateAgent;
-	private FindLinesResultListener locationResultListener;
+	private TaskResultListener<List<TransportLine>> locationResultListener;
 
 	private LineCache cache = new LineCache();
 
@@ -31,7 +32,8 @@ public class FindLinesServiceImpl implements FindLinesService, LocationListener 
 	}
 
 	@Override
-	public void findLinesByName(final FindLinesResultListener resultListener, String... query) {
+	public void findLinesByName(final TaskResultListener<List<TransportLine>> resultListener, String... query) {
+		
 		Set<TransportLine> cachedResults = new HashSet<TransportLine>();
 		Set<String> refinedQuery = new HashSet<String>();
 		for(String queryString : query) {
@@ -46,25 +48,28 @@ public class FindLinesServiceImpl implements FindLinesService, LocationListener 
 			}
 		}
 
-		resultListener.receiveFindLinesResult(new ArrayList<TransportLine>(cachedResults));
+		resultListener.receiveResults(new ArrayList<TransportLine>(cachedResults));
 
 		
 		String[] refinedLines = refinedQuery.toArray(new String[refinedQuery.size()]);
 		// Make sure the query is at least somewhat meaningful
 		if(refinedLines.length > 0 && refinedLines[0].length() > 0) {
 
+	
 			FindLinesByNameAsyncTask task = new FindLinesByNameAsyncTask(serviceUrl, user, password, 
-					new TaskResultListener<List<TransportLine>>() {
+					new LineResultListenerProxy<List<TransportLine>>(resultListener) {
 
 				@Override
 				public void receiveResults(List<TransportLine> result) {
 					for(TransportLine line : result) {
 						cache.addTransportLine(line);
 					}
-					resultListener.receiveFindLinesResult(result);
+
+					resultListener.receiveResults(result);
 				}
 
 			});
+			
 			task.execute(refinedLines);
 
 		}
@@ -72,7 +77,7 @@ public class FindLinesServiceImpl implements FindLinesService, LocationListener 
 	}
 
 	@Override
-	public void startFindingLinesByLocation(FindLinesResultListener resultListener) {
+	public void startFindingLinesByLocation(TaskResultListener<List<TransportLine>> resultListener) {
 		locationResultListener = resultListener;
 		locationUpdateAgent.startLocationUpdates(this);
 	}
@@ -106,12 +111,12 @@ public class FindLinesServiceImpl implements FindLinesService, LocationListener 
 
 	private void findStopsByLocation(Location location) {
 		FindStopsByLocationAsyncTask task = new FindStopsByLocationAsyncTask(serviceUrl, user, password, 
-				new TaskResultListener<Set<String>>() {
+				new LineResultListenerProxy<Set<String>>(locationResultListener) {
 
 			@Override
 			public void receiveResults(Set<String> result) {
 				for(String stopCode: result) {
-					findLinesPassingStop(stopCode, new TaskResultListener<Set<String>>() {
+					findLinesPassingStop(stopCode, new LineResultListenerProxy<Set<String>>(locationResultListener) {
 
 						@Override
 						public void receiveResults(Set<String> result) {

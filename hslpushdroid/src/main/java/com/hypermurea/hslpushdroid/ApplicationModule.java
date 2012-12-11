@@ -7,8 +7,10 @@ import java.util.Properties;
 import android.content.Context;
 import android.content.res.Resources;
 import android.os.Build;
+import android.telephony.TelephonyManager;
 import android.util.Log;
 
+import com.google.ads.AdRequest;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
@@ -28,6 +30,9 @@ public class ApplicationModule extends AbstractModule {
 	private static final String REITTIOPAS_USER_ID = "reittiopas.user_id";
 	private static final String REITTIOPAS_PASSWORD = "reittiopas.password";
 	private static final String HSLPUSH_BASE_URL = "hslpush.base_url";
+	
+	private static final String ADMOB_PUBLISHER_ID = "admob.publisher_id";
+	private static final String ADMOB_TEST_DEVICES = "admob.test_devices";
 	
 	@Override
 	protected void configure() {
@@ -79,6 +84,12 @@ public class ApplicationModule extends AbstractModule {
 				environmentConfig.getProperty(REITTIOPAS_USER_ID),
 				environmentConfig.getProperty(REITTIOPAS_PASSWORD),
 				new LocationUpdateAgent(ctx));
+	}
+	
+	@Provides
+	public AdViewFactory getAdViewFactory(Context ctx, Properties environmentConfig) {
+		String[] testDevices = environmentConfig.getProperty(ADMOB_TEST_DEVICES).split(",");	
+		return new AdViewFactory(environmentConfig.getProperty(ADMOB_PUBLISHER_ID), testDevices);
 	}
 	
 	private boolean isRunningOnSimulator() {

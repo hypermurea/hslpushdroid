@@ -12,6 +12,8 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import com.hypermurea.hslpushdroid.TaskResultListener;
+
 import android.os.AsyncTask;
 import android.util.Log;
 
@@ -32,6 +34,11 @@ public class FindLinesPassingStopAsyncTask extends AsyncTask<String,Void,Set<Str
 		this.listener = listener;
 	}
 
+	@Override
+	public void onPreExecute() {
+		listener.backgroundTaskStarted();
+	}
+	
 	@Override
 	public Set<String> doInBackground(String... stopCode) {
 
@@ -67,6 +74,7 @@ public class FindLinesPassingStopAsyncTask extends AsyncTask<String,Void,Set<Str
 	@Override
 	public void onPostExecute(Set<String> result) {
 		listener.receiveResults(result);
+		listener.backgroundTaskStopped();
 	}
 
 }

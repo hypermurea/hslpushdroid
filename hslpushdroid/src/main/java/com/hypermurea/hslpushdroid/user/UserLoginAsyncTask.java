@@ -84,7 +84,6 @@ public class UserLoginAsyncTask extends AsyncTask<UserProfile,Void,Boolean> {
 	
 	@Override
 	public void onPostExecute(Boolean result) {
-		progressListener.backgroundTaskEnded();
 		if(result) {
 			for(UserSignalListener listener: listeners) {
 				listener.signalUserLoggedIn();				
@@ -94,6 +93,8 @@ public class UserLoginAsyncTask extends AsyncTask<UserProfile,Void,Boolean> {
 				listener.signalLoginFailed();			
 			}
 		}
+		
+		progressListener.backgroundTaskStopped();
 	}
 
 }

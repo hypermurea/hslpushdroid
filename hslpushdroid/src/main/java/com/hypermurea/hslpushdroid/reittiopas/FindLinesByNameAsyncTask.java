@@ -18,6 +18,8 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import com.hypermurea.hslpushdroid.TaskResultListener;
+
 
 import android.os.AsyncTask;
 import android.util.Log;
@@ -37,6 +39,11 @@ public class FindLinesByNameAsyncTask extends AsyncTask<String,Void,List<Transpo
 		this.user = user;
 		this.password = password;
 		this.listener = resultListener;
+	}
+	
+	@Override
+	public void onPreExecute() {
+		listener.backgroundTaskStarted();
 	}
 
 	@Override
@@ -98,6 +105,7 @@ public class FindLinesByNameAsyncTask extends AsyncTask<String,Void,List<Transpo
 	@Override
 	public void onPostExecute(List<TransportLine> result) {
 		listener.receiveResults(result);
+		listener.backgroundTaskStopped();
 	}
 
 }

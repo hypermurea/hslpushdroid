@@ -46,8 +46,8 @@ public class UserProfileFactory {
 		return profile;
 	}
 	
-	public void signalChangeInLinesOfInterest(BackgroundTaskListener progressListener) {
-		UserLoginAsyncTask task = new UserLoginAsyncTask(serviceUrl, progressListener, profile);
+	public void signalChangeInLinesOfInterest(BackgroundTaskListener listener) {
+		UserLoginAsyncTask task = new UserLoginAsyncTask(serviceUrl, listener, profile);
 		task.execute(profile);
 	}
 	

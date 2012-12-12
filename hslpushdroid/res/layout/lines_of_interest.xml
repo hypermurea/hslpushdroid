@@ -13,14 +13,25 @@
         android:contentDescription="@string/lineTypeImageViewContentDescription"
         android:src="@drawable/bussi" />
 
-    <Button
-        android:id="@+id/linesOfInterestButton"
+    <TextView
+        android:id="@+id/linesOfInterestTextView"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
+        android:layout_alignBottom="@+id/editlinesOfInterestImageButton"
         android:layout_alignParentTop="true"
+        android:layout_marginLeft="5dp"
+        android:layout_marginRight="5dp"
+        android:layout_toLeftOf="@id/editlinesOfInterestImageButton"
         android:layout_toRightOf="@+id/lineTypeImageView"
-        android:background="@android:drawable/btn_dropdown"
-        android:drawSelectorOnTop="true"
-        android:textAppearance="?android:attr/textAppearanceSmall" />
+        android:drawSelectorOnTop="true" />
+        
+     <ImageView
+         android:id="@+id/editlinesOfInterestImageButton"
+         android:layout_width="wrap_content"
+         android:layout_height="wrap_content"
+         android:layout_alignParentRight="true"
+         android:clickable="true"
+         android:contentDescription="Muokkaa seurattavia linjoja"
+         android:src="@drawable/ic_action_edit" />
 
 </RelativeLayout>

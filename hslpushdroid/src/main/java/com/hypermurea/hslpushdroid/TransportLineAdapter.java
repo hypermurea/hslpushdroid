@@ -11,7 +11,6 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
-import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -89,7 +88,7 @@ public class TransportLineAdapter extends ArrayAdapter<TransportLine> {
 		TextView lineCodeTextView = (TextView) view.findViewById(R.id.lineCode);
 		TextView lineNameTextView = (TextView) view.findViewById(R.id.lineName);
 		ImageView transportImageView = (ImageView) view.findViewById(R.id.transportImage);
-		ImageButton trackLineButton = (ImageButton) view.findViewById(R.id.trackLineImageButton);
+		ImageView trackLineButton = (ImageView) view.findViewById(R.id.trackLineImageButton);
 
 		lineCodeTextView.setText(line.shortCode);
 		lineNameTextView.setText(line.name);

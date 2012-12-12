@@ -1,7 +1,6 @@
 package com.hypermurea.hslpushdroid.reittiopas;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 
 import org.json.JSONArray;
@@ -17,26 +16,29 @@ public class TransportLine implements Parcelable {
 	private static final String TAG = "TransportLine";
 
 	public String shortCode;
+	public String code;
 	public int transportType;
-	public String name;	
-	public HashSet<String> codes = new HashSet<String>();
+	public String name;
 
-	public TransportLine(String shortCode, int transportType, String name) {
+	public TransportLine(String shortCode, String code, int transportType, String name) {
 		this.shortCode = shortCode;
+		this.code = cleanLineCode(code);
 		this.transportType = transportType;
 		this.name = name;
 	}
 	
+	public static String cleanLineCode(String original) {
+		return original.split(" ")[0];
+	}
+		
 	public TransportLine(Parcel createFrom) {
 		List<String> data = new ArrayList<String>();
 		createFrom.readStringList(data);
 		int i = 0;
 		this.shortCode = data.get(i++);
+		this.code = data.get(i++);
 		this.transportType = Integer.parseInt(data.get(i++));
 		this.name = data.get(i++);
-		while(i < data.size()) {
-			codes.add(data.get(i++));
-		}
 	}
 
 	public static List<TransportLine> getTransportLines(String json) {
@@ -47,13 +49,11 @@ public class TransportLine implements Parcelable {
 
 			for(int i = 0; i < array.length(); i ++) {
 				JSONObject object = array.getJSONObject(i);
-				TransportLine line = new TransportLine(object.getString("short_code"), 
-						object.getInt("transport_type_id"), object.getString("name"));
-
-				JSONArray codeArray = object.getJSONArray("codes");
-				for(int j = 0; j < codeArray.length(); j ++) {
-					line.codes.add(codeArray.getString(j));
-				}
+				TransportLine line = new TransportLine(
+						object.getString("short_code"), 
+						object.getString("code"), 
+						object.getInt("transport_type_id"), 
+						object.getString("name"));
 				lines.add(line);
 			}
 		} catch(Exception ex) {
@@ -74,13 +74,9 @@ public class TransportLine implements Parcelable {
 	private JSONObject getJsonRepresentation() throws JSONException  {
 		JSONObject object = new JSONObject();
 		object.put("shortCode", shortCode);
+		object.put("code", code);
 		object.put("transportType", transportType);
 		object.put("name", name);
-		JSONArray codesInJson = new JSONArray();
-		for(String code: codes) {
-			codesInJson.put(code);
-		}
-		object.put("codes",codesInJson);
 		return object;
 	}
 
@@ -90,7 +86,6 @@ public class TransportLine implements Parcelable {
 
 	@Override
 	public int describeContents() {
-		// TODO Auto-generated method stub
 		return 0;
 	}
 
@@ -98,7 +93,9 @@ public class TransportLine implements Parcelable {
 	public void writeToParcel(Parcel parcel, int flags) {
 		List<String> data = new ArrayList<String>();
 		data.add(shortCode);
+		data.add(code);
 		data.add(String.valueOf(transportType));
+		data.add(name);
 		parcel.writeStringList(data);
 	}
 

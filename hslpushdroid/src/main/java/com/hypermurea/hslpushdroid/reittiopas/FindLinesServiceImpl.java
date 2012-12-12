@@ -11,9 +11,12 @@ import com.hypermurea.hslpushdroid.TaskResultListener;
 import android.location.Location;
 import android.location.LocationListener;
 import android.os.Bundle;
+import android.util.Log;
 
 public class FindLinesServiceImpl implements FindLinesService, LocationListener {
 
+	private static final String TAG = "FindLinesServiceImpl";
+	
 	private String user;
 	private String password;
 	private String serviceUrl;
@@ -34,28 +37,34 @@ public class FindLinesServiceImpl implements FindLinesService, LocationListener 
 	@Override
 	public void findLinesByName(final TaskResultListener<List<TransportLine>> resultListener, String... query) {
 		
+		
+		Log.d(TAG, "findLinesByName");
 		Set<TransportLine> cachedResults = new HashSet<TransportLine>();
 		Set<String> refinedQuery = new HashSet<String>();
 		for(String queryString : query) {
-			TransportLine line = cache.getTransportLine(queryString);
+			String cleanQueryString = TransportLine.cleanLineCode(queryString);
+			TransportLine line = cache.getTransportLine(cleanQueryString);
 			if(line != null) {
 				cachedResults.add(line);
 			} else {
-				if(!queried.contains(queryString)) {
-					queried.add(queryString);
+				if(!queried.contains(cleanQueryString)) {
+					queried.add(cleanQueryString);
 					refinedQuery.add(queryString);
 				}
 			}
 		}
+		
+		Log.d(TAG, "refined query: " + refinedQuery + ", size: " + refinedQuery.size());
+		Log.d(TAG, "cached results already: " + cachedResults.size());
 
-		resultListener.receiveResults(new ArrayList<TransportLine>(cachedResults));
-
+		if(!cachedResults.isEmpty()) {
+			resultListener.receiveResults(new ArrayList<TransportLine>(cachedResults));
+		}
 		
 		String[] refinedLines = refinedQuery.toArray(new String[refinedQuery.size()]);
 		// Make sure the query is at least somewhat meaningful
 		if(refinedLines.length > 0 && refinedLines[0].length() > 0) {
 
-	
 			FindLinesByNameAsyncTask task = new FindLinesByNameAsyncTask(serviceUrl, user, password, 
 					new LineResultListenerProxy<List<TransportLine>>(resultListener) {
 
@@ -79,6 +88,7 @@ public class FindLinesServiceImpl implements FindLinesService, LocationListener 
 	@Override
 	public void startFindingLinesByLocation(TaskResultListener<List<TransportLine>> resultListener) {
 		locationResultListener = resultListener;
+		resultListener.backgroundTaskStarted();
 		locationUpdateAgent.startLocationUpdates(this);
 	}
 
@@ -106,6 +116,8 @@ public class FindLinesServiceImpl implements FindLinesService, LocationListener 
 
 	@Override
 	public void onLocationChanged(Location location) {
+		locationUpdateAgent.stopLocationUpdates(this);
+		locationResultListener.backgroundTaskStopped();
 		findStopsByLocation(location);
 	}
 

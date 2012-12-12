@@ -26,12 +26,12 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.Window;
 import android.widget.ArrayAdapter;
-import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.SearchView;
+import android.widget.TextView;
 import android.widget.Toast;
 import roboguice.activity.RoboActivity;
 import roboguice.inject.InjectView;
@@ -43,68 +43,78 @@ public class MainActivity extends RoboActivity implements TaskResultListener<Lis
 
 	@InjectView(R.id.mainLinearLayout)
 	private LinearLayout mainLayout;
-	
+
 	@InjectView(R.id.linesListView) 
 	private ListView linesListView;
-	
+
+	@InjectView(R.id.latestDisruptionTextView)
+	private TextView latestDisruptionTextView;
+
+	@InjectView(R.id.noLinesOfInterestTextView)
+	private TextView noLinesOfInterestTextView;
+
 	@Inject private UserProfileFactory userProfileFactory;
 	@Inject private FindLinesService findLinesService;
 	@Inject private AdViewFactory adViewFactory;
-	
+
 	private int backgroundTasksRunning = 0;
-	
+
 	// TODO Implement hashset to store currently existing search results
 	private static final String BUNDLED_LINE_SEARCH_RESULTS = "bundled_line_search_results";
 	private TransportLineAdapter searchResultsAdapter;
 	private ArrayList<TransportLine> currentLineSearchResults = new ArrayList<TransportLine>();
-	
+
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
-		
+
 		super.onCreate(savedInstanceState);
-		
+
 		//TODO Restore hashset of search results
-		
+
 		requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
-		
+
 		setContentView(R.layout.main);
-		
-		
+
 		injectDynamicLinesOfInterestViewsToLayout();
 		updateDynamicLinesOfInterestViews(userProfileFactory.getUserProfile(this));
-		
+		updateHelp(userProfileFactory.getUserProfile(this));
+
 		setProgressBarIndeterminateVisibility(false);
 
 		LinearLayout mainLayout = (LinearLayout) this.findViewById(R.id.mainLinearLayout);
 		AdView adView = (AdView) adViewFactory.getAdView(this, mainLayout);
 		mainLayout.addView(adView);
 		adView.loadAd(adViewFactory.getAdRequest());
-				
-		if(savedInstanceState != null) {
-			ArrayList<TransportLine> bundledResults = savedInstanceState.getParcelableArrayList(BUNDLED_LINE_SEARCH_RESULTS);
-			currentLineSearchResults.addAll(bundledResults);
-		}
+
 		searchResultsAdapter = new TransportLineAdapter(this, R.layout.line_list_row, currentLineSearchResults, this);
 		linesListView.setAdapter(searchResultsAdapter);
-		searchResultsAdapter.notifyDataSetChanged();
-		
-		
-		Intent intent = getIntent();
-		if (Intent.ACTION_SEARCH.equals(intent.getAction())) {
-			currentLineSearchResults.clear();
+
+		if(savedInstanceState != null) {
+			ArrayList<TransportLine> bundledResults = savedInstanceState.getParcelableArrayList(BUNDLED_LINE_SEARCH_RESULTS);
+			Log.d(TAG, "Restoring search results:" + bundledResults.size());
+
+			currentLineSearchResults.addAll(bundledResults);
 			searchResultsAdapter.notifyDataSetChanged();
-			
-			String query = intent.getStringExtra(SearchManager.QUERY);
-			findLinesService.findLinesByName(this, query);
+		} else {
+			Intent intent = getIntent();
+			if (Intent.ACTION_SEARCH.equals(intent.getAction())) {
+				Log.d(TAG, "search invoked");
+				currentLineSearchResults.clear();
+				searchResultsAdapter.notifyDataSetChanged();
+
+				String query = intent.getStringExtra(SearchManager.QUERY);
+				findLinesService.findLinesByName(this, query);
+			}
 		}
-		
+
 	}
-	
+
 	@Override
 	public void onSaveInstanceState(Bundle bundle) {
 		bundle.putParcelableArrayList(BUNDLED_LINE_SEARCH_RESULTS, currentLineSearchResults);
+		Log.d(TAG, "put " + currentLineSearchResults.size() + " results in bundle");
 	}
-	
+
 	private void injectDynamicLinesOfInterestViewsToLayout() {
 		if(mainLayout.findViewById(R.id.bussesOfInterest) == null) {
 			addLineOfInterestRowToLayout(R.id.bussesOfInterest, R.drawable.bussi);
@@ -113,29 +123,37 @@ public class MainActivity extends RoboActivity implements TaskResultListener<Lis
 			addLineOfInterestRowToLayout(R.id.ferriesOfInterest, R.drawable.lautta);
 		}
 	}
-	
+
 	private void addLineOfInterestRowToLayout(int viewId, int drawableId) {
 		LayoutInflater inflater = (LayoutInflater) getApplicationContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 		View view = inflater.inflate(R.layout.lines_of_interest, null);
 		view.setId(viewId);
 		ImageView imageView = (ImageView) view.findViewById(R.id.lineTypeImageView);
 		imageView.setImageResource(drawableId);
-	
+
 		mainLayout.addView(view, 1);
 	}
 
-	
+	private void updateHelp(UserProfile profile) {
+		if(!profile.linesOfInterest.isEmpty()) {
+			noLinesOfInterestTextView.setText("");
+		}
+		if(profile.linesOfInterest.size() == 1 && latestDisruptionTextView.getText().length() == 0) {
+			latestDisruptionTextView.setText("TŠssŠ kohdassa nŠkyy viimeisin saamasi hŠirištiedote, joka ilmestyy puhelimeesi viestinŠ myšs tŠmŠn sovelluksen ollessa suljettuna. Voit myšs lisŠtŠ lisŠŠ joukkoliikennelinjoja, joista haluat hŠirištiedotuksia.");
+		}
+	}
+
 	private void updateDynamicLinesOfInterestViews(UserProfile profile) {
 		updateDynamicRowOfInterestView(R.id.bussesOfInterest, R.drawable.bussi, profile);
 		updateDynamicRowOfInterestView(R.id.metrosOfInterest, R.drawable.metro, profile);
 		updateDynamicRowOfInterestView(R.id.tramsOfInterest, R.drawable.ratikka, profile);
 		updateDynamicRowOfInterestView(R.id.ferriesOfInterest, R.drawable.lautta, profile);
 	}
-	
+
 	private void updateDynamicRowOfInterestView(int viewId, int drawableId, UserProfile profile) {
-		
+
 		View view = mainLayout.findViewById(viewId);
-		Button linesOfInterestButton = (Button) view.findViewById(R.id.linesOfInterestButton);
+		TextView linesOfInterestTextView = (TextView) view.findViewById(R.id.linesOfInterestTextView);
 		String lineCodesConcatenated = "";
 		List<TransportLine> lines = new ArrayList<TransportLine>();
 		for(TransportLine line : profile.linesOfInterest) {
@@ -144,36 +162,37 @@ public class MainActivity extends RoboActivity implements TaskResultListener<Lis
 				lines.add(line);
 			}
 		}
-		
-		linesOfInterestButton.setText(lineCodesConcatenated);
-		
+
+		linesOfInterestTextView.setText(lineCodesConcatenated);
+
 		if(lineCodesConcatenated.length() > 0) {
 			view.setVisibility(View.VISIBLE);
 		} else {
 			view.setVisibility(View.GONE);
 		}
-		
+
 		final ArrayAdapter<TransportLine> adapter = new ArrayAdapter<TransportLine>(this,
-		        android.R.layout.simple_spinner_dropdown_item, lines);
-		
-		linesOfInterestButton.setOnClickListener(new View.OnClickListener() {
+				android.R.layout.simple_spinner_dropdown_item, lines);
+
+		ImageView editLinesOfInterest = (ImageView) view.findViewById(R.id.editlinesOfInterestImageButton);
+		editLinesOfInterest.setOnClickListener(new View.OnClickListener() {
 			public void onClick(View view) {
-				  new AlertDialog.Builder(MainActivity.this)
-				  .setTitle("Poista seurattavia linjoja")
-				  .setAdapter(adapter, new DialogInterface.OnClickListener() {
+				new AlertDialog.Builder(MainActivity.this)
+				.setTitle("Poista seurattavia linjoja")
+				.setAdapter(adapter, new DialogInterface.OnClickListener() {
 
-				    @Override
-				    public void onClick(DialogInterface dialog, int which) {
+					@Override
+					public void onClick(DialogInterface dialog, int which) {
 
-				      ListView items = ((AlertDialog) dialog).getListView();
-				      MainActivity.this.removeTransportLine((TransportLine) items.getAdapter().getItem(which));
-				     
-				      dialog.dismiss();
-				    }
-				  }).create().show();
-				}
-        });
-		
+						ListView items = ((AlertDialog) dialog).getListView();
+						MainActivity.this.removeTransportLine((TransportLine) items.getAdapter().getItem(which));
+
+						dialog.dismiss();
+					}
+				}).create().show();
+			}
+		});
+
 
 	}	
 
@@ -194,45 +213,49 @@ public class MainActivity extends RoboActivity implements TaskResultListener<Lis
 		}
 		return true;
 	}
-	
+
 	@Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case R.id.search:
-                onSearchRequested();
-                return true;
-            default:
-                return false;
-        }
-    }
+	public boolean onOptionsItemSelected(MenuItem item) {
+		switch (item.getItemId()) {
+		case R.id.search:
+			onSearchRequested();
+			return true;
+		default:
+			return false;
+		}
+	}
 
 	@Override
 	public void removeTransportLine(TransportLine line) {
 		userProfileFactory.getUserProfile(this).linesOfInterest.remove(line);
 		updateDynamicLinesOfInterestViews(userProfileFactory.getUserProfile(this));
+
+		updateHelp(userProfileFactory.getUserProfile(this));
 		userProfileFactory.signalChangeInLinesOfInterest(this);
 	}
-	
+
 	@Override
 	public void addTransportLine(TransportLine line) {
 		Log.d(TAG, "transportLineClicked: " + line.shortCode + " " + line.transportType);
-		
+
 		TransportLineAdapter listAdapter = (TransportLineAdapter) linesListView.getAdapter();
 		listAdapter.remove(line);
 		listAdapter.notifyDataSetChanged();
-		
+
 		userProfileFactory.getUserProfile(this).linesOfInterest.add(line);
 		updateDynamicLinesOfInterestViews(userProfileFactory.getUserProfile(this));
+
+		updateHelp(userProfileFactory.getUserProfile(this));
 		userProfileFactory.signalChangeInLinesOfInterest(this);
-		
+
 		Log.d(TAG, "reached");
-	
+
 	}
-	
+
 	@Override
 	public void receiveResults(List<TransportLine> lines) {	
 		if(lines != null) {
-			
+
 			boolean newResults = false;
 			for(TransportLine line : lines) {
 				if(!searchResultsContains(line)) {
@@ -244,36 +267,37 @@ public class MainActivity extends RoboActivity implements TaskResultListener<Lis
 			if(newResults) {
 				searchResultsAdapter.notifyDataSetChanged();			
 			}
-			
+
 		} else {
 			Toast.makeText(this, "search failed", Toast.LENGTH_LONG).show();
 		}
 	}
-	
+
 	private boolean searchResultsContains(TransportLine pendingAdd) {
 		for(TransportLine line : currentLineSearchResults) {
-			if(line.shortCode.equals(pendingAdd.shortCode)) {
+			if(line.code.equals(pendingAdd.code)) {
 				return true;
 			}
 		}
 		return false;
 	}
-	
-	
+
+
 	public void searchNearbyLinesToggled(View view) {    
-		
+
 		if(((CheckBox) view).isChecked()) {
 			Log.d(TAG, "Starting location updates");
 			currentLineSearchResults.clear();
+			Toast.makeText(this, "Odota kŠrsivŠllisesti, tŠmŠ saattaa kestŠŠ hetken", Toast.LENGTH_LONG).show();
 			searchResultsAdapter.notifyDataSetChanged();
 			findLinesService.startFindingLinesByLocation(this);
 		} else {
 			Log.d(TAG, "Stopping location updates");
 			findLinesService.stopFindingLinesByLocation();
 		}
-		
+
 	}
-	
+
 	@Override
 	public void backgroundTaskStarted() {
 		backgroundTasksRunning++;
@@ -285,18 +309,19 @@ public class MainActivity extends RoboActivity implements TaskResultListener<Lis
 			}
 		}
 	}
-	
+
 	@Override
 	public void backgroundTaskStopped() {
 		backgroundTasksRunning--;
-		if(backgroundTasksRunning == 0) {
+		if(backgroundTasksRunning <= 0) {
 			synchronized(this) {
-				if(backgroundTasksRunning == 0) {
+				if(backgroundTasksRunning <= 0) {
+					backgroundTasksRunning = 0;
 					this.setProgressBarIndeterminateVisibility(false);
 				}
 			}
 		}
-		
+
 	}
 
 }

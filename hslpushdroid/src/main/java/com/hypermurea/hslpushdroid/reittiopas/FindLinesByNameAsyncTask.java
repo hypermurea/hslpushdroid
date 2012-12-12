@@ -40,7 +40,7 @@ public class FindLinesByNameAsyncTask extends AsyncTask<String,Void,List<Transpo
 		this.password = password;
 		this.listener = resultListener;
 	}
-	
+
 	@Override
 	public void onPreExecute() {
 		listener.backgroundTaskStarted();
@@ -55,9 +55,9 @@ public class FindLinesByNameAsyncTask extends AsyncTask<String,Void,List<Transpo
 
 			MessageFormat baseUrl = 
 					new MessageFormat(serviceUrl + "?request=lines&format=json&user={0}&pass={1}&query={2}");
-			
+
 			String[] args = {user, password, buildQuery(searchTerms)};
-			
+
 			HttpClient httpClient = new DefaultHttpClient();
 			HttpGet request = new HttpGet(baseUrl.format(args));
 
@@ -67,19 +67,26 @@ public class FindLinesByNameAsyncTask extends AsyncTask<String,Void,List<Transpo
 			searchResult = new ArrayList<TransportLine>();
 
 			String responseString = httpClient.execute(request, responseHandler);
-			JSONArray response = new JSONArray(responseString);
 
-			HashMap<String, TransportLine> resultHash = new HashMap<String, TransportLine>();
-			for( int i = 0; i < response.length(); i ++) {
-				JSONObject lineJson = response.getJSONObject(i);
-				TransportLine line = new TransportLine(lineJson.getString("code_short"), lineJson.getInt("transport_type_id"), lineJson.getString("name"));
-				String key = line.shortCode + " " + line.transportType;
-				if(!resultHash.containsKey(key)) {
-					resultHash.put(key, line);
-					searchResult.add(line);
-				} 
-				resultHash.get(key).codes.add(lineJson.getString("code"));
-			}	
+			// TODO check if the API actually returns a status code along with an empty response
+			if(responseString.length() > 0) {
+				JSONArray response = new JSONArray(responseString);
+
+				HashMap<String, TransportLine> resultHash = new HashMap<String, TransportLine>();
+				for( int i = 0; i < response.length(); i ++) {
+					JSONObject lineJson = response.getJSONObject(i);
+					TransportLine line = new TransportLine(
+							lineJson.getString("code_short"),
+							lineJson.getString("code"),
+							lineJson.getInt("transport_type_id"), 
+							lineJson.getString("name"));
+
+					if(!resultHash.containsKey(line.code)) {
+						resultHash.put(line.code, line);
+						searchResult.add(line);
+					} 
+				}	
+			}
 
 		} catch (ClientProtocolException e) {
 			e.printStackTrace();

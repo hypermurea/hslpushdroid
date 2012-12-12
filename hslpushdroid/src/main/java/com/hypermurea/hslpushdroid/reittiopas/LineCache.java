@@ -11,9 +11,7 @@ public class LineCache {
 	}
 
 	public void addTransportLine(TransportLine line) {
-		for(String code : line.codes) {
-			linesById.put(code,  line);
-		}
+		linesById.put(line.code, line);
 	}
 	
 }

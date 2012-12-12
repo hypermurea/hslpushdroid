@@ -16,14 +16,15 @@
         android:text="Small Text"
         android:textAppearance="?android:attr/textAppearanceSmall" />
 
-    <ImageButton
+    <ImageView
         android:id="@+id/trackLineImageButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentRight="true"
         android:layout_alignTop="@+id/lineCode"
-        android:src="@drawable/ic_action_star" 
-        android:contentDescription="Seuraa häiriöitä"/>
+        android:contentDescription="Seuraa häiriöitä"
+        android:clickable="true"
+        android:src="@drawable/favorite" />
 
     <ImageView
         android:id="@+id/transportImage"

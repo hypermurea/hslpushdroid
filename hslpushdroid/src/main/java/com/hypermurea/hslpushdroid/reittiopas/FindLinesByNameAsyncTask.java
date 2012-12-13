@@ -54,7 +54,7 @@ public class FindLinesByNameAsyncTask extends AsyncTask<String,Void,List<Transpo
 		try {
 
 			MessageFormat baseUrl = 
-					new MessageFormat(serviceUrl + "?request=lines&format=json&user={0}&pass={1}&query={2}");
+					new MessageFormat(serviceUrl + "?request=lines&format=json&user={0}&pass={1}&query={2}&p=111001");
 
 			String[] args = {user, password, buildQuery(searchTerms)};
 

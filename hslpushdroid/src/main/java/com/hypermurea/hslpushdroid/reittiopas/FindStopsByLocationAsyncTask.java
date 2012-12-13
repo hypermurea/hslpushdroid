@@ -47,7 +47,7 @@ public class FindStopsByLocationAsyncTask extends AsyncTask<Location,Void,Set<St
 	@Override
 	protected Set<String> doInBackground(Location... location) {
 		MessageFormat baseUrl = 
-				new MessageFormat(serviceUrl + "?user={0}&pass={1}&request={2}&epsg_in=wgs84&format=json&center_coordinate={3},{4}&diameter={5}");
+				new MessageFormat(serviceUrl + "?user={0}&pass={1}&request={2}&epsg_in=wgs84&format=json&center_coordinate={3},{4}&diameter={5}&p=1");
 
 		String[] args = {
 				user, 

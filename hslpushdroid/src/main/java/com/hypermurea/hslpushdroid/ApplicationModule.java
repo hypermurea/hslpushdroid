@@ -7,14 +7,13 @@ import java.util.Properties;
 import android.content.Context;
 import android.content.res.Resources;
 import android.os.Build;
-import android.telephony.TelephonyManager;
 import android.util.Log;
 
-import com.google.ads.AdRequest;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import com.hypermurea.hslpushdroid.gcm.DevelopmentGCMRegistrationService;
+import com.hypermurea.hslpushdroid.gcm.GCMIntentService;
 import com.hypermurea.hslpushdroid.gcm.GCMRegistrationService;
 import com.hypermurea.hslpushdroid.gcm.LiveGCMRegistrationService;
 import com.hypermurea.hslpushdroid.reittiopas.FindLinesService;
@@ -37,6 +36,8 @@ public class ApplicationModule extends AbstractModule {
 	@Override
 	protected void configure() {
 		requestStaticInjection(EnvironmentConfig.class);
+		requestStaticInjection(GCMIntentService.class);
+		requestStaticInjection(MockNotificationReceiver.class);
 	}
 	
 	/** Google Cloud Messaging cannot be used on the default simulator, therefore it needs to be disabled for development */
@@ -90,6 +91,11 @@ public class ApplicationModule extends AbstractModule {
 	public AdViewFactory getAdViewFactory(Context ctx, Properties environmentConfig) {
 		String[] testDevices = environmentConfig.getProperty(ADMOB_TEST_DEVICES).split(",");	
 		return new AdViewFactory(environmentConfig.getProperty(ADMOB_PUBLISHER_ID), testDevices);
+	}
+	
+	@Provides
+	public DisruptionNotifier getDisruptionNotifier() {
+		return new DisruptionNotifier();
 	}
 	
 	private boolean isRunningOnSimulator() {

@@ -21,8 +21,6 @@ public class EnvironmentConfig {
 			  InputStream rawResource = resourcesProvider.get().openRawResource(R.raw.development);
 			  properties = new Properties();
 			  properties.load(rawResource);
-			  System.out.println("The properties are now loaded");
-			  System.out.println("properties: " + properties);
 			} catch (Resources.NotFoundException e) {
 			  System.err.println("Did not find raw resource: " + e);
 			} catch (IOException e) {

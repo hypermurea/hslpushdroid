@@ -24,6 +24,7 @@
     
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.VIBRATE" />
     
     <application
         android:icon="@drawable/icon"
@@ -64,6 +65,8 @@
                 <category android:name="com.hypermurea.hslpushdroid.gcm" />
             </intent-filter>
         </receiver>
+        
+        <receiver  android:process=":remote" android:name="MockNotificationReceiver"></receiver>
 
         <service android:name=".gcm.GCMIntentService" />
     </application>

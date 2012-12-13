@@ -16,7 +16,6 @@
         android:id="@+id/noLinesOfInterestTextView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Tästä kohdassa näkyvät joukkoliikenteen linjat joiden häiriötiedotuksia seuraat. Et ole vielä valinnut seurattavia linjoja, mutta voit tehdä sen hakua (suurennuslasi) tai paikannusta käyttäen."
         android:textAppearance="?android:attr/textAppearanceSmall" />
     
         

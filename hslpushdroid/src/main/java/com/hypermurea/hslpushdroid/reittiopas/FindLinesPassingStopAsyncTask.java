@@ -46,7 +46,7 @@ public class FindLinesPassingStopAsyncTask extends AsyncTask<String,Void,Set<Str
 
 		try {
 			MessageFormat baseUrl = 
-					new MessageFormat(serviceUrl + "?user={0}&pass={1}&request={2}&format=json&code={3}");
+					new MessageFormat(serviceUrl + "?user={0}&pass={1}&request={2}&format=json&code={3}&p=0000001");
 
 			String[] args = {user, password, "stop", stopCode[0]};		
 

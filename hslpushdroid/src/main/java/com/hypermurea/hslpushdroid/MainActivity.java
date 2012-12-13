@@ -1,6 +1,7 @@
 package com.hypermurea.hslpushdroid;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
 
 import com.google.ads.AdView;
@@ -11,7 +12,9 @@ import com.hypermurea.hslpushdroid.user.UserProfile;
 import com.hypermurea.hslpushdroid.user.UserProfileFactory;
 
 import android.annotation.SuppressLint;
+import android.app.AlarmManager;
 import android.app.AlertDialog;
+import android.app.PendingIntent;
 import android.app.SearchManager;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -69,8 +72,6 @@ public class MainActivity extends RoboActivity implements TaskResultListener<Lis
 
 		super.onCreate(savedInstanceState);
 
-		//TODO Restore hashset of search results
-
 		requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
 
 		setContentView(R.layout.main);
@@ -78,6 +79,8 @@ public class MainActivity extends RoboActivity implements TaskResultListener<Lis
 		injectDynamicLinesOfInterestViewsToLayout();
 		updateDynamicLinesOfInterestViews(userProfileFactory.getUserProfile(this));
 		updateHelp(userProfileFactory.getUserProfile(this));
+		
+		setupAlarm();
 
 		setProgressBarIndeterminateVisibility(false);
 
@@ -108,6 +111,22 @@ public class MainActivity extends RoboActivity implements TaskResultListener<Lis
 		}
 
 	}
+	
+	private void setupAlarm() {
+		// get a Calendar object with current time
+		 Calendar cal = Calendar.getInstance();
+		 // add 5 minutes to the calendar object
+		 cal.add(Calendar.SECOND, 30);
+		 Intent intent = new Intent(this, MockNotificationReceiver.class);
+		 intent.putExtra("from", "195");
+		 intent.putExtra("message", "Liikenteen toiminnassa hŠirišitŠ");
+		 // In reality, you would want to have a static variable for the request code instead of 192837
+		 PendingIntent sender = PendingIntent.getBroadcast(this, 192837, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+		 
+		 // Get the AlarmManager service
+		 AlarmManager am = (AlarmManager) getSystemService(ALARM_SERVICE);
+		 am.set(AlarmManager.RTC_WAKEUP, cal.getTimeInMillis(), sender);
+	}
 
 	@Override
 	public void onSaveInstanceState(Bundle bundle) {
@@ -135,8 +154,10 @@ public class MainActivity extends RoboActivity implements TaskResultListener<Lis
 	}
 
 	private void updateHelp(UserProfile profile) {
-		if(!profile.linesOfInterest.isEmpty()) {
-			noLinesOfInterestTextView.setText("");
+		if(profile.linesOfInterest.isEmpty()) {
+			noLinesOfInterestTextView.setText("TŠstŠ kohdassa nŠkyvŠt joukkoliikenteen linjat joiden hŠirištiedotuksia seuraat. Et ole vielŠ valinnut seurattavia linjoja, mutta voit tehdŠ sen hakua (suurennuslasi) tai paikannusta kŠyttŠen.");
+		} else {
+			noLinesOfInterestTextView.setText("");	
 		}
 		if(profile.linesOfInterest.size() == 1 && latestDisruptionTextView.getText().length() == 0) {
 			latestDisruptionTextView.setText("TŠssŠ kohdassa nŠkyy viimeisin saamasi hŠirištiedote, joka ilmestyy puhelimeesi viestinŠ myšs tŠmŠn sovelluksen ollessa suljettuna. Voit myšs lisŠtŠ lisŠŠ joukkoliikennelinjoja, joista haluat hŠirištiedotuksia.");
@@ -203,7 +224,6 @@ public class MainActivity extends RoboActivity implements TaskResultListener<Lis
 		inflater.inflate(R.menu.options_menu, menu);
 
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-
 			SearchManager searchManager = (SearchManager) getSystemService(Context.SEARCH_SERVICE);
 
 			SearchView searchView = (SearchView) menu.findItem(R.id.search).getActionView();

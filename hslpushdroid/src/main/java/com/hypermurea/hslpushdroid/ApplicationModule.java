@@ -5,6 +5,7 @@ import java.io.InputStream;
 import java.util.Properties;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.os.Build;
 import android.util.Log;
@@ -18,12 +19,15 @@ import com.hypermurea.hslpushdroid.gcm.GCMRegistrationService;
 import com.hypermurea.hslpushdroid.gcm.LiveGCMRegistrationService;
 import com.hypermurea.hslpushdroid.reittiopas.FindLinesService;
 import com.hypermurea.hslpushdroid.reittiopas.FindLinesServiceImpl;
+import com.hypermurea.hslpushdroid.reittiopas.ReittiopasService;
 import com.hypermurea.hslpushdroid.user.UserProfileFactory;
 
 public class ApplicationModule extends AbstractModule {
 	
+	public static final String LAST_DISRUPTION_PREFERENCE = "last_disruption";
+	
 	private static final String TAG = "ApplicationModule";
-
+	
 	private static final String GCM_SENDER_ID = "gcm.sender_id";
 	private static final String REITTIOPAS_BASE_URL = "reittiopas.base_url";
 	private static final String REITTIOPAS_USER_ID = "reittiopas.user_id";
@@ -74,17 +78,23 @@ public class ApplicationModule extends AbstractModule {
 		
 	@Provides
 	@Singleton
-	public UserProfileFactory getUserProfileFactory(GCMRegistrationService gcmRegistrationService, Properties environmentConfig) {
-		return new UserProfileFactory(gcmRegistrationService, environmentConfig.getProperty(HSLPUSH_BASE_URL));
+	public UserProfileFactory getUserProfileFactory(GCMRegistrationService gcmRegistrationService, Properties environmentConfig, SharedPreferences preferences) {
+		return new UserProfileFactory(gcmRegistrationService, environmentConfig.getProperty(HSLPUSH_BASE_URL), preferences);
 	}
 
 	@Provides
 	@Singleton
-	public FindLinesService getFindLinesService(Context ctx, Properties environmentConfig) {
-		return new FindLinesServiceImpl(environmentConfig.getProperty(REITTIOPAS_BASE_URL),
+	public FindLinesService getFindLinesService(Context ctx, ReittiopasService service) {
+		return new FindLinesServiceImpl(service, new LocationUpdateAgent(ctx));
+	}
+	
+	@Provides 
+	@Singleton
+	public ReittiopasService getReittiopasService(Properties environmentConfig) {
+		return new ReittiopasService(
 				environmentConfig.getProperty(REITTIOPAS_USER_ID),
 				environmentConfig.getProperty(REITTIOPAS_PASSWORD),
-				new LocationUpdateAgent(ctx));
+				environmentConfig.getProperty(REITTIOPAS_BASE_URL));
 	}
 	
 	@Provides
@@ -94,8 +104,8 @@ public class ApplicationModule extends AbstractModule {
 	}
 	
 	@Provides
-	public DisruptionNotifier getDisruptionNotifier() {
-		return new DisruptionNotifier();
+	public DisruptionNotifier getDisruptionNotifier(SharedPreferences preferences) {
+		return new DisruptionNotifier(preferences);
 	}
 	
 	private boolean isRunningOnSimulator() {

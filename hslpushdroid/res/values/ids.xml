@@ -16,5 +16,9 @@
     <item
         name="ferriesOfInterest"
         type="id"/>
+    
+    <item
+        name="trainsOfInterest"
+        type="id"/>
 
 </resources>

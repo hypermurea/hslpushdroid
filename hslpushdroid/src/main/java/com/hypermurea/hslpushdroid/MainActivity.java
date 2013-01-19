@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 
+import org.json.JSONException;
+
 import com.google.ads.AdView;
 import com.google.inject.Inject;
 import com.hypermurea.hslpushdroid.reittiopas.FindLinesService;
@@ -19,6 +21,7 @@ import android.app.SearchManager;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
@@ -59,6 +62,8 @@ public class MainActivity extends RoboActivity implements TaskResultListener<Lis
 	@Inject private UserProfileFactory userProfileFactory;
 	@Inject private FindLinesService findLinesService;
 	@Inject private AdViewFactory adViewFactory;
+	
+	@Inject private SharedPreferences preferences;
 
 	private int backgroundTasksRunning = 0;
 
@@ -80,6 +85,9 @@ public class MainActivity extends RoboActivity implements TaskResultListener<Lis
 		updateDynamicLinesOfInterestViews(userProfileFactory.getUserProfile(this));
 		updateHelp(userProfileFactory.getUserProfile(this));
 		
+		// TODO make modular
+		latestDisruptionTextView.setText(preferences.getString(ApplicationModule.LAST_DISRUPTION_PREFERENCE, ""));
+
 		setupAlarm();
 
 		setProgressBarIndeterminateVisibility(false);
@@ -111,21 +119,21 @@ public class MainActivity extends RoboActivity implements TaskResultListener<Lis
 		}
 
 	}
-	
+
 	private void setupAlarm() {
 		// get a Calendar object with current time
-		 Calendar cal = Calendar.getInstance();
-		 // add 5 minutes to the calendar object
-		 cal.add(Calendar.SECOND, 30);
-		 Intent intent = new Intent(this, MockNotificationReceiver.class);
-		 intent.putExtra("from", "195");
-		 intent.putExtra("message", "Liikenteen toiminnassa hŠirišitŠ");
-		 // In reality, you would want to have a static variable for the request code instead of 192837
-		 PendingIntent sender = PendingIntent.getBroadcast(this, 192837, intent, PendingIntent.FLAG_UPDATE_CURRENT);
-		 
-		 // Get the AlarmManager service
-		 AlarmManager am = (AlarmManager) getSystemService(ALARM_SERVICE);
-		 am.set(AlarmManager.RTC_WAKEUP, cal.getTimeInMillis(), sender);
+		Calendar cal = Calendar.getInstance();
+		// add 5 minutes to the calendar object
+		cal.add(Calendar.SECOND, 30);
+		Intent intent = new Intent(this, MockNotificationReceiver.class);
+		intent.putExtra("from", "195");
+		intent.putExtra("message", "Liikenteen toiminnassa hŠirišitŠ");
+		// In reality, you would want to have a static variable for the request code instead of 192837
+		PendingIntent sender = PendingIntent.getBroadcast(this, 192837, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+
+		// Get the AlarmManager service
+		AlarmManager am = (AlarmManager) getSystemService(ALARM_SERVICE);
+		am.set(AlarmManager.RTC_WAKEUP, cal.getTimeInMillis(), sender);
 	}
 
 	@Override
@@ -135,9 +143,11 @@ public class MainActivity extends RoboActivity implements TaskResultListener<Lis
 	}
 
 	private void injectDynamicLinesOfInterestViewsToLayout() {
+
 		if(mainLayout.findViewById(R.id.bussesOfInterest) == null) {
 			addLineOfInterestRowToLayout(R.id.bussesOfInterest, R.drawable.bussi);
 			addLineOfInterestRowToLayout(R.id.metrosOfInterest, R.drawable.metro);
+			addLineOfInterestRowToLayout(R.id.trainsOfInterest, R.drawable.juna);
 			addLineOfInterestRowToLayout(R.id.tramsOfInterest, R.drawable.ratikka);
 			addLineOfInterestRowToLayout(R.id.ferriesOfInterest, R.drawable.lautta);
 		}
@@ -167,6 +177,7 @@ public class MainActivity extends RoboActivity implements TaskResultListener<Lis
 	private void updateDynamicLinesOfInterestViews(UserProfile profile) {
 		updateDynamicRowOfInterestView(R.id.bussesOfInterest, R.drawable.bussi, profile);
 		updateDynamicRowOfInterestView(R.id.metrosOfInterest, R.drawable.metro, profile);
+		updateDynamicRowOfInterestView(R.id.trainsOfInterest, R.drawable.juna, profile);
 		updateDynamicRowOfInterestView(R.id.tramsOfInterest, R.drawable.ratikka, profile);
 		updateDynamicRowOfInterestView(R.id.ferriesOfInterest, R.drawable.lautta, profile);
 	}
@@ -251,12 +262,17 @@ public class MainActivity extends RoboActivity implements TaskResultListener<Lis
 		updateDynamicLinesOfInterestViews(userProfileFactory.getUserProfile(this));
 
 		updateHelp(userProfileFactory.getUserProfile(this));
-		userProfileFactory.signalChangeInLinesOfInterest(this);
+		
+		// TODO Poor style, unified way of handling exceptions needed
+		try {
+			userProfileFactory.signalChangeInUser(this);
+		} catch(JSONException e) {
+			Toast.makeText(this, "User data update failed", Toast.LENGTH_LONG).show();
+		}
 	}
 
 	@Override
 	public void addTransportLine(TransportLine line) {
-		Log.d(TAG, "transportLineClicked: " + line.shortCode + " " + line.transportType);
 
 		TransportLineAdapter listAdapter = (TransportLineAdapter) linesListView.getAdapter();
 		listAdapter.remove(line);
@@ -266,36 +282,36 @@ public class MainActivity extends RoboActivity implements TaskResultListener<Lis
 		updateDynamicLinesOfInterestViews(userProfileFactory.getUserProfile(this));
 
 		updateHelp(userProfileFactory.getUserProfile(this));
-		userProfileFactory.signalChangeInLinesOfInterest(this);
-
-		Log.d(TAG, "reached");
+		
+		// TODO Poor style, unified way of handling exceptions needed
+		try {
+			userProfileFactory.signalChangeInUser(this);
+		} catch(JSONException e) {
+			Toast.makeText(this, "User data update failed", Toast.LENGTH_LONG).show();
+		}
 
 	}
 
 	@Override
 	public void receiveResults(List<TransportLine> lines) {	
-		if(lines != null) {
-
-			boolean newResults = false;
-			for(TransportLine line : lines) {
-				if(!searchResultsContains(line)) {
-					Log.d(TAG, "search results do not contain: " + line.shortCode);
-					currentLineSearchResults.add(line);
-					newResults = true;
-				}
+		
+		boolean newResults = false;
+		for(TransportLine line : lines) {
+			if(!searchResultsContains(line)) {
+				Log.d(TAG, "search results do not contain: " + line.shortCode);
+				currentLineSearchResults.add(line);
+				newResults = true;
 			}
-			if(newResults) {
-				searchResultsAdapter.notifyDataSetChanged();			
-			}
-
-		} else {
-			Toast.makeText(this, "search failed", Toast.LENGTH_LONG).show();
 		}
+		if(newResults) {
+			searchResultsAdapter.notifyDataSetChanged();			
+		}
+
 	}
 
 	private boolean searchResultsContains(TransportLine pendingAdd) {
 		for(TransportLine line : currentLineSearchResults) {
-			if(line.code.equals(pendingAdd.code)) {
+			if(line.shortCode.equals(pendingAdd.shortCode) && line.transportType == pendingAdd.transportType) {
 				return true;
 			}
 		}

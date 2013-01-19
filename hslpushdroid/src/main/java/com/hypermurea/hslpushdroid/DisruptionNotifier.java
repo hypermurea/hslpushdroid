@@ -5,9 +5,17 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.PowerManager;
 
 public class DisruptionNotifier {
+	
+	private SharedPreferences preferences;
+	
+	public DisruptionNotifier(SharedPreferences preferences) {
+		this.preferences = preferences;
+	}
+	
 	
 	public void wakeDeviceAndNotify(Context ctx, String from, String message) {
 		// credit where credit is due:
@@ -31,7 +39,8 @@ public class DisruptionNotifier {
         notification.setLatestEventInfo(ctx, from, message, contentIntent);
         notification.defaults = Notification.DEFAULT_ALL;
         
-        NotificationCompat.Builder;
+        preferences.edit().putString(ApplicationModule.LAST_DISRUPTION_PREFERENCE, message).commit();
+        
         // TODO This should probably be a setting
         //notification.flags = Notification.FLAG_INSISTENT;
         

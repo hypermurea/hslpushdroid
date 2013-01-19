@@ -1,6 +1,5 @@
 package com.hypermurea.hslpushdroid.reittiopas;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -17,63 +16,34 @@ public class FindLinesServiceImpl implements FindLinesService, LocationListener 
 
 	private static final String TAG = "FindLinesServiceImpl";
 	
-	private String user;
-	private String password;
-	private String serviceUrl;
+	private ReittiopasService service;
 	private LocationUpdateAgent locationUpdateAgent;
 	private TaskResultListener<List<TransportLine>> locationResultListener;
 
-	private LineCache cache = new LineCache();
-
-	private HashSet<String> queried = new HashSet<String>();
-
-	public FindLinesServiceImpl(String serviceUrl, String user, String password, LocationUpdateAgent locationUpdateAgent) {
-		this.serviceUrl = serviceUrl;
-		this.user = user;
-		this.password = password;
+	public FindLinesServiceImpl(ReittiopasService service, LocationUpdateAgent locationUpdateAgent) {
+		this.service = service;
 		this.locationUpdateAgent = locationUpdateAgent;
 	}
 
 	@Override
 	public void findLinesByName(final TaskResultListener<List<TransportLine>> resultListener, String... query) {
 		
-		
-		Log.d(TAG, "findLinesByName");
-		Set<TransportLine> cachedResults = new HashSet<TransportLine>();
 		Set<String> refinedQuery = new HashSet<String>();
 		for(String queryString : query) {
-			String cleanQueryString = TransportLine.cleanLineCode(queryString);
-			TransportLine line = cache.getTransportLine(cleanQueryString);
-			if(line != null) {
-				cachedResults.add(line);
-			} else {
-				if(!queried.contains(cleanQueryString)) {
-					queried.add(cleanQueryString);
-					refinedQuery.add(queryString);
-				}
-			}
+			refinedQuery.add(queryString);
 		}
 		
 		Log.d(TAG, "refined query: " + refinedQuery + ", size: " + refinedQuery.size());
-		Log.d(TAG, "cached results already: " + cachedResults.size());
-
-		if(!cachedResults.isEmpty()) {
-			resultListener.receiveResults(new ArrayList<TransportLine>(cachedResults));
-		}
 		
 		String[] refinedLines = refinedQuery.toArray(new String[refinedQuery.size()]);
 		// Make sure the query is at least somewhat meaningful
 		if(refinedLines.length > 0 && refinedLines[0].length() > 0) {
 
-			FindLinesByNameAsyncTask task = new FindLinesByNameAsyncTask(serviceUrl, user, password, 
+			FindLinesByNameAsyncTask task = new FindLinesByNameAsyncTask(service, 
 					new LineResultListenerProxy<List<TransportLine>>(resultListener) {
 
 				@Override
 				public void receiveResults(List<TransportLine> result) {
-					for(TransportLine line : result) {
-						cache.addTransportLine(line);
-					}
-
 					resultListener.receiveResults(result);
 				}
 
@@ -122,21 +92,13 @@ public class FindLinesServiceImpl implements FindLinesService, LocationListener 
 	}
 
 	private void findStopsByLocation(Location location) {
-		FindStopsByLocationAsyncTask task = new FindStopsByLocationAsyncTask(serviceUrl, user, password, 
-				new LineResultListenerProxy<Set<String>>(locationResultListener) {
+
+		FindLinesByLocationAsyncTask task = new FindLinesByLocationAsyncTask(service, 
+				new LineResultListenerProxy<List<TransportLine>>(locationResultListener) {
 
 			@Override
-			public void receiveResults(Set<String> result) {
-				for(String stopCode: result) {
-					findLinesPassingStop(stopCode, new LineResultListenerProxy<Set<String>>(locationResultListener) {
-
-						@Override
-						public void receiveResults(Set<String> result) {
-							findLinesByName(locationResultListener, result.toArray(new String[result.size()]));
-						}
-
-					});
-				}
+			public void receiveResults(List<TransportLine> results) {
+				locationResultListener.receiveResults(results);
 			}
 		});
 		task.execute(location);		
@@ -144,7 +106,7 @@ public class FindLinesServiceImpl implements FindLinesService, LocationListener 
 
 	private void findLinesPassingStop(String stopCode, TaskResultListener<Set<String>> resultListener) {
 		// TODO run through cache, if no hit then user task
-		FindLinesPassingStopAsyncTask task = new FindLinesPassingStopAsyncTask(serviceUrl, user, password, resultListener);
+		FindLinesPassingStopAsyncTask task = new FindLinesPassingStopAsyncTask(service, resultListener);
 		task.execute(stopCode);
 	}
 

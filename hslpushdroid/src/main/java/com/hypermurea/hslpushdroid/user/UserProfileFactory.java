@@ -3,8 +3,8 @@ package com.hypermurea.hslpushdroid.user;
 import java.util.List;
 import java.util.UUID;
 
-import com.google.inject.Inject;
-import com.hypermurea.hslpushdroid.BackgroundTaskListener;
+import org.json.JSONException;
+
 import com.hypermurea.hslpushdroid.MainActivity;
 import com.hypermurea.hslpushdroid.gcm.GCMRegistrationService;
 import com.hypermurea.hslpushdroid.reittiopas.TransportLine;
@@ -21,23 +21,25 @@ public class UserProfileFactory {
 	
 	private static final String TAG = "UserProfileFactory";
 	
-	@Inject private GCMRegistrationService gcmRegistrationService;
+	private GCMRegistrationService gcmRegistrationService;
 	private String serviceUrl;
+	private SharedPreferences preferences;
 	
 	private static UserProfile profile;
 	
-	public UserProfileFactory(GCMRegistrationService gcmRegistrationService, String serviceUrl) {
+	final String TRANSPORT_LINES_JSON_PREFERENCE = "transport_lines";
+	
+	public UserProfileFactory(GCMRegistrationService gcmRegistrationService, String serviceUrl, SharedPreferences preferences) {
 		this.gcmRegistrationService = gcmRegistrationService;
 		this.serviceUrl = serviceUrl;
+		this.preferences = preferences;
 	}
 	
 	public UserProfile getUserProfile(MainActivity activity) {		
 		if(profile == null) {
-			SharedPreferences preferences = activity.getPreferences(Context.MODE_PRIVATE);
-			
 			UserProfileFactory.profile = new UserProfile();	
-			UserProfileFactory.profile.uuid = getUuid(preferences);
-			UserProfileFactory.profile.linesOfInterest = getTransportLines(preferences);
+			UserProfileFactory.profile.uuid = getUuid();
+			UserProfileFactory.profile.linesOfInterest = getTransportLines();
 		
 			userListensToGcmRegistration(activity);
 			gcmRegistrationService.registerForGcmMessaging(activity);
@@ -46,12 +48,18 @@ public class UserProfileFactory {
 		return profile;
 	}
 	
-	public void signalChangeInLinesOfInterest(BackgroundTaskListener listener) {
-		UserLoginAsyncTask task = new UserLoginAsyncTask(serviceUrl, listener, profile);
+	// TODO poor style to have no unified way to handle exceptions
+	public void signalChangeInUser(MainActivity activity) throws JSONException {
+		Editor editor = preferences.edit();
+		editor.putString(TRANSPORT_LINES_JSON_PREFERENCE, TransportLine.getJsonArray(UserProfileFactory.profile.linesOfInterest).toString());
+		editor.commit();
+		
+		UserLoginAsyncTask task = new UserLoginAsyncTask(serviceUrl, activity, UserProfileFactory.profile);
 		task.execute(profile);
+		
 	}
 	
-	private static String getUuid(SharedPreferences preferences) {
+	private String getUuid() {
 		final String UUID_KEY = "uuid_key";
 
 		String uuid = preferences.getString(UUID_KEY, null);
@@ -61,14 +69,20 @@ public class UserProfileFactory {
 			editor.putString(UUID_KEY, uuid);
 			editor.commit();
 			Log.d(TAG, "generated new uuid: " + uuid);
+		} else {
+			Log.d(TAG, "UUID retrieved from preferences: " + uuid);
 		}
 		
 		return uuid;
 	}
 	
-	private List<TransportLine> getTransportLines(SharedPreferences preferences) {
-		final String TRANSPORT_LINES_JSON = "transport_lines";
-		String transportLinesJson = preferences.getString(TRANSPORT_LINES_JSON, "[]");
+	private List<TransportLine> getTransportLines() {
+		String transportLinesJson = preferences.getString(TRANSPORT_LINES_JSON_PREFERENCE, "[]");
+		if(transportLinesJson.equals("[]")) {
+			Log.d(TAG, "transportLines not stored, defaulting");
+		} else {
+			Log.d(TAG, "transportLines loaded from user preferences");
+		}
 		return TransportLine.getTransportLines(transportLinesJson);
 	}
 	

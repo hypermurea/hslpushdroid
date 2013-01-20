@@ -16,7 +16,7 @@ public class GCMIntentService extends GCMBaseIntentService {
 
 	@Override
 	protected void onError(Context arg0, String arg1) {
-		Log.e(TAG, "onError invoked");
+		Log.e(TAG, "onError invoked: " + arg1);
 	}
 
 	@Override

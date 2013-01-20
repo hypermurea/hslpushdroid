@@ -33,9 +33,11 @@ public class FindLinesByLocationAsyncTask extends AsyncTask<Location,List<Transp
 		for(String stop: stops) {
 			Set<String> lineCodes = service.findLinesPassingStop(stop);
 			lineCodes.removeAll(exhaustedLineCodes);
-			List<TransportLine> lines = service.findTransportLinesByName(lineCodes.toArray(new String[lineCodes.size()]));
-			this.publishProgress(lines);
-			exhaustedLineCodes.addAll(lineCodes);
+			if(!lineCodes.isEmpty()) {
+				List<TransportLine> lines = service.findTransportLinesByName(lineCodes.toArray(new String[lineCodes.size()]));
+				this.publishProgress(lines);
+				exhaustedLineCodes.addAll(lineCodes);
+			}
 		}
 		
 		return new ArrayList<TransportLine>();

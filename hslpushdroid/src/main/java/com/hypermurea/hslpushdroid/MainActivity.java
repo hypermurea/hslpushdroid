@@ -88,7 +88,7 @@ public class MainActivity extends RoboActivity implements TaskResultListener<Lis
 		// TODO make modular
 		latestDisruptionTextView.setText(preferences.getString(ApplicationModule.LAST_DISRUPTION_PREFERENCE, ""));
 
-		setupAlarm();
+		//setupAlarm();
 
 		setProgressBarIndeterminateVisibility(false);
 
